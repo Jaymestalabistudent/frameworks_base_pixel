@@ -5695,6 +5695,7 @@ public final class Settings {
          * the setting value. See an example above.
          */
 
+
         /**
          * Keys we no longer back up under the current schema, but want to continue to
          * process when restoring historical backup datasets.
@@ -11447,6 +11448,13 @@ public final class Settings {
         public static void setLocationProviderEnabled(ContentResolver cr,
                 String provider, boolean enabled) {
         }
+
+
+       /**
+         * Immersive Navigation gesture
+         * @hide
+         */
+        public static final String IMMERSIVE_NAVIGATION = "immersive_navigation";
     }
 
     /**
