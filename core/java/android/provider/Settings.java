@@ -5695,6 +5695,7 @@ public final class Settings {
          * the setting value. See an example above.
          */
 
+
         /**
 	 * Settings Base Layout
 	 * @hide
@@ -11472,6 +11473,13 @@ public final class Settings {
         public static void setLocationProviderEnabled(ContentResolver cr,
                 String provider, boolean enabled) {
         }
+
+
+       /**
+         * Immersive Navigation gesture
+         * @hide
+         */
+        public static final String IMMERSIVE_NAVIGATION = "immersive_navigation";
     }
 
     /**
