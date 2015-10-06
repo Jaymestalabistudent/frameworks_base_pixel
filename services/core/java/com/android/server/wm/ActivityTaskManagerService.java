@@ -503,6 +503,13 @@ public class ActivityTaskManagerService extends IActivityTaskManager.Stub {
      */
     private Configuration mTempConfig = new Configuration();
 
+    /** Temporary to avoid allocations. */
+    final StringBuilder mStringBuilder = new StringBuilder(256);
+
+    // Amount of time after a call to stopAppSwitches() during which we will
+    // prevent further untrusted switches from happening.
+    private static final long APP_SWITCH_DELAY_TIME = 1 * 1000;
+
     /**
      * Whether normal application switches are allowed; a call to {@link #stopAppSwitches()
      * disables this.
