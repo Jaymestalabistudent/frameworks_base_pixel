@@ -6010,6 +6010,12 @@ public final class Settings {
         public static final String SWIPE_TO_SCREENSHOT = "swipe_to_screenshot";
 
         /**
+         * Switch for lockscreen media metadata
+         * @hide
+         */
+        public static final String LOCKSCREEN_MEDIA_METADATA = "lockscreen_media_metadata";
+
+        /**
          * IMPORTANT: If you add a new public settings you also have to add it to
          * PUBLIC_SETTINGS below. If the new setting is hidden you have to add
          * it to PRIVATE_SETTINGS below. Also add a validator that can validate
@@ -6091,6 +6097,24 @@ public final class Settings {
          * @hide
          */ 
         public static final String VOLUME_PANEL_HAPTIC_FEEDBACK = "volume_panel_haptic_feedback";
+
+        /**
+         * Switch between filters for lockscreen album art
+         * @hide
+         */
+        public static final String LOCKSCREEN_ALBUMART_FILTER = "lockscreen_albumart_filter";
+
+        /**
+         * lockscreen album art blur level
+         * @hide
+         */
+        public static final String LS_MEDIA_FILTER_BLUR_RADIUS = "ls_media_filter_blur_radius";
+        
+        /**
+         * lockscreen album art fade level
+         * @hide
+         */
+        public static final String LS_MEDIA_ARTWORK_FADE_PERCENT = "ls_media_artwork_fade_percent";
 
         /**
          * Keys we no longer back up under the current schema, but want to continue to
@@ -6286,6 +6310,10 @@ public final class Settings {
             PRIVATE_SETTINGS.add(ADAPTIVE_PLAYBACK_ENABLED);
             PRIVATE_SETTINGS.add(ADAPTIVE_PLAYBACK_TIMEOUT);
             PRIVATE_SETTINGS.add(SENSOR_BLOCK);
+            PRIVATE_SETTINGS.add(LOCKSCREEN_MEDIA_METADATA);
+            PRIVATE_SETTINGS.add(LOCKSCREEN_ALBUMART_FILTER);
+            PRIVATE_SETTINGS.add(LS_MEDIA_FILTER_BLUR_RADIUS);
+            PRIVATE_SETTINGS.add(LS_MEDIA_ARTWORK_FADE_PERCENT);
         }
         /**
          * These entries are considered common between the personal and the managed profile,

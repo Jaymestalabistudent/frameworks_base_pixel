@@ -75,7 +75,6 @@ import com.android.systemui.statusbar.policy.KeyguardStateController;
 import com.android.systemui.statusbar.policy.RemoteInputUriController;
 import com.android.systemui.statusbar.window.StatusBarWindowController;
 import com.android.systemui.tracing.ProtoTracer;
-import com.android.systemui.tuner.TunerService;
 import com.android.systemui.util.concurrency.DelayableExecutor;
 import com.android.systemui.util.time.SystemClock;
 
@@ -142,8 +141,8 @@ public interface CentralSurfacesDependenciesModule {
             SysuiColorExtractor colorExtractor,
             KeyguardStateController keyguardStateController,
             DumpManager dumpManager,
-            DisplayManager displayManager,
-            TunerService tunerService) {
+            WallpaperManager wallpaperManager,
+            DisplayManager displayManager) {
         return new NotificationMediaManager(
                 context,
                 centralSurfacesOptionalLazy,
@@ -159,8 +158,8 @@ public interface CentralSurfacesDependenciesModule {
                 colorExtractor,
                 keyguardStateController,
                 dumpManager,
-                displayManager,
-                tunerService);
+                wallpaperManager,
+                displayManager);
     }
 
     /** */
