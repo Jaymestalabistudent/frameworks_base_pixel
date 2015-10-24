@@ -961,6 +961,9 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             resolver.registerContentObserver(Settings.Secure.getUriFor(
                     Settings.Secure.POWER_MENU_HIDE_ON_SECURE), false, this,
                     UserHandle.USER_ALL);
+            resolver.registerContentObserver(Settings.Secure.getUriFor(
+                    Settings.Secure.POWER_MENU_HIDE_ON_SECURE), false, this,
+                    UserHandle.USER_ALL);
             updateSettings();
         }
 
@@ -1842,7 +1845,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             return;
         }
         if (mGlobalActions == null) {
-            mGlobalActions = new GlobalActions(mContext, mWindowManagerFuncs);
+            mGlobalActions = mGlobalActionsFactory.get();
         }
         mGlobalActions.showDialog(keyguardShowing, isDeviceProvisioned());
         // since it took two seconds of long press to bring this up,
