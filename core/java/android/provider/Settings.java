@@ -16855,7 +16855,11 @@ public final class Settings {
          */
         public static final String WAKE_WHEN_PLUGGED_OR_UNPLUGGED =
                 "wake_when_plugged_or_unplugged";
-
+        /**
+         * * Audio focus mode for ringtones when headset is connected
+         * @hide
+        */
+               public static final String RINGTONE_FOCUS_MODE = "ringtone_focus_mode";       
         /**
          * Global settings that shouldn't be persisted.
          *
