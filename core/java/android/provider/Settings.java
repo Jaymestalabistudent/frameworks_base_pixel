@@ -6051,7 +6051,27 @@ public final class Settings {
          * @hide
          */
         public static final String ADAPTIVE_PLAYBACK_TIMEOUT = "adaptive_playback_timeout";
+        
+        
+        /**
+        * Statusbar logo
+        * @hide
+        */
+       public static final String STATUS_BAR_LOGO = "status_bar_logo";
 
+       /**
+        * Position of Status bar logo
+        * 0 - Left (default)
+        * 1 - Right
+        * @hide
+        */
+       public static final String STATUS_BAR_LOGO_POSITION = "status_bar_logo_position";
+
+       /**
+        * Statusbar logo custom style
+        * @hide
+        */
+       public static final String STATUS_BAR_LOGO_STYLE = "status_bar_logo_style";
         /**
          * Force full screen for devices with cutout
          * @hide
