@@ -4453,7 +4453,12 @@ public final class Settings {
         @Deprecated
         @Readable
         public static final String NEXT_ALARM_FORMATTED = "next_alarm_formatted";
-
+  /**
+         * Sensor block per-package
+         * @hide
+         */
+        @Readable
+        public static final String SENSOR_BLOCK = "sensor_block";
         /**
          * Scaling factor for fonts, float.
          */
@@ -6265,6 +6270,7 @@ public final class Settings {
             PRIVATE_SETTINGS.add(SWIPE_TO_SCREENSHOT);
             PRIVATE_SETTINGS.add(ADAPTIVE_PLAYBACK_ENABLED);
             PRIVATE_SETTINGS.add(ADAPTIVE_PLAYBACK_TIMEOUT);
+            PRIVATE_SETTINGS.add(SENSOR_BLOCK);
         }
         /**
          * These entries are considered common between the personal and the managed profile,
@@ -19607,3 +19613,4 @@ public final class Settings {
         return packages[0];
     }
 }
+
