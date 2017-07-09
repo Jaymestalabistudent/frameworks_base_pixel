@@ -4459,6 +4459,13 @@ public final class Settings {
          */
         @Readable
         public static final String FONT_SCALE = "font_scale";
+       
+        /**
+         * Sensor block per-package
+         * @hide
+         */
+        @Readable
+        public static final String SENSOR_BLOCK = "sensor_block";
 
         /**
          * The serialized system locale value.
@@ -5874,6 +5881,8 @@ public final class Settings {
             PRIVATE_SETTINGS.add(TOUCHSCREEN_GESTURE_HAPTIC_FEEDBACK);
             PRIVATE_SETTINGS.add(HIGH_TOUCH_SENSITIVITY_ENABLE);
             PRIVATE_SETTINGS.add(HIGH_TOUCH_POLLING_RATE_ENABLE);
+            PRIVATE_SETTINGS.add(SENSOR_BLOCK);
+
         }
 
         /**
@@ -19077,3 +19086,4 @@ public final class Settings {
         return packages[0];
     }
 }
+
