@@ -11486,6 +11486,12 @@ public final class Settings {
         public static final String LAUNCHER_HIDDEN_APPS = "launcher_hidden_apps";
 
         /**
+         * Whether to include options in power menu for rebooting into recovery or bootloader
+         * @hide
+         */
+        public static final String ADVANCED_REBOOT = "advanced_reboot";
+
+        /**
          * These entries are considered common between the personal and the managed profile,
          * since the managed profile doesn't get to change them.
          */
