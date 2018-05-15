@@ -7444,5 +7444,7 @@ message MetricsEvent {
     // project orchid Metrics
     ORCHIDOS_SETTINGS = 6772;    
     
+    // AWAKEN Metrics
+    AWAKEN = 9872;
   }
 }
