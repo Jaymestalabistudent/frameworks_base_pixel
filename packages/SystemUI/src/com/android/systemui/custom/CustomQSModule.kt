@@ -11,6 +11,7 @@ import com.android.systemui.qs.tiles.AmbientDisplayTile
 import com.android.systemui.qs.tiles.UsbTetherTile
 import com.android.systemui.qs.tiles.AODTile
 import com.android.systemui.qs.tiles.VpnTile
+import com.android.systemui.qs.tiles.ReadingModeTile
 
 import dagger.Binds
 import dagger.Module
@@ -78,4 +79,9 @@ interface CustomQSModule {
     @IntoMap
     @StringKey(VpnTile.TILE_SPEC)
     fun bindVpnTile(vpnTile: VpnTile): QSTileImpl<*>
+    /** Inject ReadingModeTile into tileMap in QSModule */
+    @Binds
+    @IntoMap
+    @StringKey(ReadingModeTile.TILE_SPEC)
+    fun bindReadingModeTile(readingModeTile: ReadingModeTile): QSTileImpl<*>
 }
