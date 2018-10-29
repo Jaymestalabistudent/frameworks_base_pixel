@@ -1722,19 +1722,14 @@ public class GnssLocationProvider extends AbstractLocationProvider implements
         String setId = null;
         final Boolean isEmergency = mNIHandler.getInEmergency();
 
-        // Unless we are in an emergency, do not provide sensitive subscriber information
-        // to SUPL servers.
-        if (!isEmergency) {
-            mGnssNative.setAgpsSetId(type, "");
-            return;
-        }
-
-        int subId = SubscriptionManager.getDefaultDataSubscriptionId();
-        if (isEmergency && mNetworkConnectivityHandler.getActiveSubId() >= 0) {
-            subId = mNetworkConnectivityHandler.getActiveSubId();
-        }
-        if (SubscriptionManager.isValidSubscriptionId(subId)) {
-            phone = phone.createForSubscriptionId(subId);
+        /*
+         * We don't want to tell Google our IMSI or phone number to spy on us!
+         * As devices w/o SIM card also have working GPS, providing this data does
+         * not seem to add a lot of value, at least not for the device holder
+         *
+        int ddSubId = SubscriptionManager.getDefaultDataSubscriptionId();
+        if (SubscriptionManager.isValidSubscriptionId(ddSubId)) {
+            phone = phone.createForSubscriptionId(ddSubId);
         }
         if ((flags & AGPS_REQUEST_SETID_IMSI) == AGPS_REQUEST_SETID_IMSI) {
             setId = phone.getSubscriberId();
@@ -1748,7 +1743,7 @@ public class GnssLocationProvider extends AbstractLocationProvider implements
                 // This means the framework has the SIM card.
                 type = AGPS_SETID_TYPE_MSISDN;
             }
-        }
+        } */
 
         mGnssNative.setAgpsSetId(type, (setId == null) ? "" : setId);
     }
