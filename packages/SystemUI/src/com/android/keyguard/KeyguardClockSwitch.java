@@ -7,6 +7,9 @@ import android.animation.ObjectAnimator;
 import android.content.Context;
 import android.graphics.Rect;
 import android.util.AttributeSet;
+import android.util.Log;
+import android.util.MathUtils;
+import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
@@ -16,6 +19,11 @@ import androidx.annotation.IntDef;
 import androidx.annotation.VisibleForTesting;
 
 import com.android.keyguard.dagger.KeyguardStatusViewScope;
+import com.android.internal.colorextraction.ColorExtractor;
+import com.android.internal.colorextraction.ColorExtractor.OnColorsChangedListener;
+import com.android.keyguard.clock.ClockManager;
+import com.android.keyguard.KeyguardSliceView;
+import com.android.systemui.Interpolators;
 import com.android.systemui.R;
 import com.android.systemui.animation.Interpolators;
 import com.android.systemui.plugins.ClockController;
@@ -71,6 +79,16 @@ public class KeyguardClockSwitch extends RelativeLayout {
 
     private View mStatusArea;
     private int mSmartspaceTopOffset;
+    /**
+     * Container for big custom clock.
+     */
+    private ViewGroup mBigClockContainer;
+
+    /**
+     * Status area (date and other stuff) shown below the clock. Plugin can decide whether or not to
+     * show it below the alternate clock.
+     */
+    private KeyguardSliceView mKeyguardStatusArea;
 
     /**
      * Maintain state so that a newly connected plugin can be initialized.
@@ -117,12 +135,22 @@ public class KeyguardClockSwitch extends RelativeLayout {
         onDensityOrFontScaleChanged();
     }
 
-    public void setLogBuffer(LogBuffer logBuffer) {
-        mLogBuffer = logBuffer;
+    @Override
+    protected void onAttachedToWindow() {
+        super.onAttachedToWindow();
+        mClockManager.addOnClockChangedListener(mClockChangedListener);
+        mStatusBarStateController.addCallback(mStateListener);
+        mSysuiColorExtractor.addOnColorsChangedListener(mColorsListener);
+        updateColors();
     }
 
-    public LogBuffer getLogBuffer() {
-        return mLogBuffer;
+    @Override
+    protected void onDetachedFromWindow() {
+        super.onDetachedFromWindow();
+        mClockManager.removeOnClockChangedListener(mClockChangedListener);
+        mStatusBarStateController.removeCallback(mStateListener);
+        mSysuiColorExtractor.removeOnColorsChangedListener(mColorsListener);
+        setClockPlugin(null);
     }
 
     void setClock(ClockController clock, int statusBarState) {
@@ -136,6 +164,23 @@ public class KeyguardClockSwitch extends RelativeLayout {
             if (mLogBuffer != null) {
                 mLogBuffer.log(TAG, LogLevel.ERROR, "No clock being shown");
             }
+            if (mBigClockContainer != null) {
+                mBigClockContainer.removeAllViews();
+                updateBigClockVisibility();
+            }
+            mClockPlugin.onDestroyView();
+            mClockPlugin = null;
+        }
+        adjustStatusAreaPadding(plugin);
+        if (plugin == null) {
+            if (mShowingHeader) {
+                mClockView.setVisibility(View.GONE);
+                mClockViewBold.setVisibility(View.VISIBLE);
+            } else {
+                mClockView.setVisibility(View.VISIBLE);
+                mClockViewBold.setVisibility(View.INVISIBLE);
+            }
+            mKeyguardStatusArea.setVisibility(View.VISIBLE);
             return;
         }
 
@@ -255,6 +300,14 @@ public class KeyguardClockSwitch extends RelativeLayout {
             }
         });
         mStatusAreaAnim.start();
+    }
+
+    private void adjustStatusAreaPadding(ClockPlugin plugin) {
+        final boolean mIsTypeClock = plugin != null && plugin.getName().equals("type");
+        mKeyguardStatusArea.setRowGravity(mIsTypeClock ? Gravity.LEFT : Gravity.CENTER);
+        mKeyguardStatusArea.setRowPadding(mIsTypeClock ? mContext.getResources()
+                .getDimensionPixelSize(R.dimen.keyguard_status_area_typeclock_padding) : 0, 0, 0,
+                0);
     }
 
     /**
