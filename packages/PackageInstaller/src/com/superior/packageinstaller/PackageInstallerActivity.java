@@ -126,33 +126,25 @@ public class PackageInstallerActivity extends BottomAlertActivity {
     private boolean mEnableOk = false;
 
     private void startInstallConfirm(PackageInfo oldInfo) {
-        requireViewById(R.id.updating_app_view).setVisibility(View.VISIBLE); // the main layout
         View viewToEnable; // which install_confirm view to show
-        View oldVersionLayout;
-        View newVersionLayout;
-        View updateArrow;
-        TextView oldVersionView;
-        TextView newVersionView;
+        TextView oldVersionView, newVersionView;
 
-        oldVersionLayout = requireViewById(R.id.version_old_layout);
-        newVersionLayout = requireViewById(R.id.version_new_layout);
-        updateArrow = requireViewById(R.id.version_update_arrow);
-        requireViewById(R.id.statusLayout).setVisibility(View.VISIBLE);
+        requireViewById(R.id.updating_app_view).setVisibility(View.VISIBLE); // the main layout
 
         if (mAppInfo != null) {
             viewToEnable = requireViewById(R.id.install_confirm_question_update);
             oldVersionView = requireViewById(R.id.installed_app_version);
-            oldVersionView.setText(oldInfo.versionName);
-            oldVersionLayout.setVisibility(View.VISIBLE);
-            updateArrow.setVisibility(View.VISIBLE);
+            oldVersionView.setText(getString(R.string.old_version_number, oldInfo.versionName));
+            oldVersionView.setVisibility(View.VISIBLE);
+            mOk.setText(R.string.update);
         } else {
             // This is a new application with no permissions.
             viewToEnable = requireViewById(R.id.install_confirm_question);
         }
         newVersionView = requireViewById(R.id.updating_app_version);
-        newVersionView.setText(mPkgInfo.versionName);
+        newVersionView.setText(getString(R.string.new_version_number, mPkgInfo.versionName));
         viewToEnable.setVisibility(View.VISIBLE);
-        newVersionLayout.setVisibility(View.VISIBLE);
+        newVersionView.setVisibility(View.VISIBLE);
 
         mEnableOk = true;
         mOk.setEnabled(true);
@@ -279,20 +271,22 @@ public class PackageInstallerActivity extends BottomAlertActivity {
             mPkgInfo.applicationInfo.packageName = pkgName;
         }
         // Check if package is already installed. display confirmation dialog if replacing pkg
+        PackageInfo oldPackageInfo = null;
         try {
             // This is a little convoluted because we want to get all uninstalled
             // apps, but this may include apps with just data, and if it is just
             // data we still want to count it as "installed".
-            mAppInfo = mPm.getApplicationInfo(pkgName,
+            oldPackageInfo = mPm.getPackageInfo(pkgName,
                     PackageManager.MATCH_UNINSTALLED_PACKAGES);
-            if ((mAppInfo.flags&ApplicationInfo.FLAG_INSTALLED) == 0) {
+            mAppInfo = oldPackageInfo.applicationInfo;
+            if (mAppInfo != null && (mAppInfo.flags & ApplicationInfo.FLAG_INSTALLED) == 0) {
                 mAppInfo = null;
             }
         } catch (NameNotFoundException e) {
             mAppInfo = null;
         }
 
-        startInstallConfirm();
+        startInstallConfirm(oldPackageInfo);
     }
 
     void setPmResult(int pmResult) {
