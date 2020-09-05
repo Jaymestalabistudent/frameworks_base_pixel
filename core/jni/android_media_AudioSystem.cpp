@@ -37,6 +37,14 @@
 #include <sstream>
 #include <vector>
 
+#include <audiomanager/AudioManager.h>
+#include <media/AudioPolicy.h>
+#include <media/AudioSystem.h>
+#include <media/AppTrackData.h>
+#include <media/MicrophoneInfo.h>
+#include <nativehelper/ScopedLocalRef.h>
+#include <system/audio.h>
+#include <system/audio_policy.h>
 #include "android_media_AudioAttributes.h"
 #include "android_media_AudioDescriptor.h"
 #include "android_media_AudioDeviceAttributes.h"
@@ -183,15 +191,8 @@ static struct {
     jmethodID postVolRangeInitReqFromNative;
 } gAudioPolicyEventHandlerMethods;
 
-jclass gListClass;
-static struct {
-    jmethodID add;
-    jmethodID get;
-    jmethodID size;
-} gListMethods;
-
-static jclass gAudioDescriptorClass;
-static jmethodID gAudioDescriptorCstor;
+static jclass gAppTrackDataClass;
+static jmethodID gAppTrackDataCstor;
 
 //
 // JNI Initialization for OpenSLES routing
@@ -842,6 +843,110 @@ android_media_AudioSystem_getMasterBalance(JNIEnv *env, jobject thiz)
         balance = 0.f;
     }
     return balance;
+}
+
+static jint
+android_media_AudioSystem_setAppVolume(JNIEnv *env, jobject thiz, jstring packageName, jfloat value)
+{
+    const jchar* c_packageName = env->GetStringCritical(packageName, 0);
+    String8 package8 = String8(reinterpret_cast<const char16_t*>(c_packageName), env->GetStringLength(packageName));
+    env->ReleaseStringCritical(packageName, c_packageName);
+    return (jint) check_AudioSystem_Command(AudioSystem::setAppVolume(package8, value));
+}
+
+static jint
+android_media_AudioSystem_setAppMute(JNIEnv *env, jobject thiz, jstring packageName, jboolean mute)
+{
+    const jchar* c_packageName = env->GetStringCritical(packageName, 0);
+    String8 package8 = String8(reinterpret_cast<const char16_t*>(c_packageName), env->GetStringLength(packageName));
+    env->ReleaseStringCritical(packageName, c_packageName);
+    return (jint) check_AudioSystem_Command(AudioSystem::setAppMute(package8, mute));
+}
+
+jint convertAppTrackDataFromNative(JNIEnv *env, jobject *jAppTrackData, const AppTrackData *AppTrackData)
+{
+    jint jStatus = (jint)AUDIO_JAVA_SUCCESS;
+    jstring jPackageName;
+    jfloat jVolume;
+    jboolean jMute;
+    jboolean jActive;
+
+    if (AppTrackData == NULL || jAppTrackData == NULL) {
+        jStatus = (jint)AUDIO_JAVA_ERROR;
+        goto exit;
+    }
+
+    jPackageName = env->NewStringUTF((*AppTrackData).packageName);
+    jVolume = (*AppTrackData).volume;
+    jMute = (*AppTrackData).muted;
+    jActive = (*AppTrackData).active;
+
+    *jAppTrackData = env->NewObject(gAppTrackDataClass, gAppTrackDataCstor,
+                                jPackageName, jMute, jVolume, jActive);
+                                
+    env->DeleteLocalRef(jPackageName);
+exit:
+    return jStatus;
+}
+
+static jint
+android_media_AudioSystem_listAppTrackDatas(JNIEnv *env, jobject clazz, jobject jVolumes)
+{
+    ALOGV("listAppTrackDatas");
+
+    if (jVolumes == NULL) {
+        ALOGE("listAppTrackDatas NULL AppTrackData ArrayList");
+        return (jint)AUDIO_JAVA_BAD_VALUE;
+    }
+    if (!env->IsInstanceOf(jVolumes, gArrayListClass)) {
+        ALOGE("listAppTrackDatas not an arraylist");
+        return (jint)AUDIO_JAVA_BAD_VALUE;
+    }
+
+    status_t status;
+    unsigned int numVolumes;
+    AppTrackData *nVolumes = NULL;
+    jint jStatus = (jint)AUDIO_JAVA_SUCCESS;
+
+    numVolumes = 0;
+    status = AudioSystem::listAppTrackDatas(&numVolumes, NULL);
+    if (status != NO_ERROR) {
+        ALOGE("AudioSystem::listAppTrackDatas error %d", status);
+        jStatus = nativeToJavaStatus(status);
+        goto exit;
+    }
+    if (numVolumes == 0) {
+        goto exit;
+    }
+    nVolumes = (AppTrackData *)realloc(nVolumes, numVolumes * sizeof(AppTrackData));
+
+    status = AudioSystem::listAppTrackDatas(&numVolumes, nVolumes);
+    jStatus = nativeToJavaStatus(status);
+    if (jStatus != AUDIO_JAVA_SUCCESS) {
+        goto exit;
+    }
+
+    for (size_t i = 0; i < numVolumes; i++) {
+        jobject jAppTrackData = NULL;
+        jStatus = convertAppTrackDataFromNative(env, &jAppTrackData, &nVolumes[i]);
+        if (jStatus != AUDIO_JAVA_SUCCESS) {
+            goto exit;
+        }
+        env->CallBooleanMethod(jVolumes, gArrayListMethods.add, jAppTrackData);
+        if (jAppTrackData != NULL) {
+            env->DeleteLocalRef(jAppTrackData);
+        }
+    }
+
+exit:
+    free(nVolumes);
+    return jStatus;
+}
+
+static jint
+android_media_AudioSystem_getDevicesForStream(JNIEnv *env, jobject thiz, jint stream)
+{
+    return (jint) AudioSystem::getDevicesForStream(static_cast <audio_stream_type_t>(stream));
 }
 
 static jint
@@ -3105,7 +3210,13 @@ static const JNINativeMethod gMethods[] =
           (void *)android_media_AudioSystem_getDirectPlaybackSupport},
          {"getDirectProfilesForAttributes",
           "(Landroid/media/AudioAttributes;Ljava/util/ArrayList;)I",
-          (void *)android_media_AudioSystem_getDirectProfilesForAttributes}};
+          (void *)android_media_AudioSystem_getDirectProfilesForAttributes},
+         {"setAppVolume", "(Ljava/lang/String;F)I",
+          (void *)android_media_AudioSystem_setAppVolume},
+         {"setAppMute", "(Ljava/lang/String;Z)I",
+          (void *)android_media_AudioSystem_setAppMute},
+         {"listAppTrackDatas", "(Ljava/util/ArrayList;)I",
+          (void *)android_media_AudioSystem_listAppTrackDatas}};
 
 static const JNINativeMethod gEventHandlerMethods[] = {
     {"native_setup",
@@ -3202,6 +3313,11 @@ int register_android_media_AudioSystem(JNIEnv *env)
     gAudioPortFields.mType = GetFieldIDOrDie(env, audioDevicePortClass, "mType", "I");
     gAudioPortFields.mAddress = GetFieldIDOrDie(env, audioDevicePortClass, "mAddress",
             "Ljava/lang/String;");
+
+    jclass AppTrackDataClass = FindClassOrDie(env, "android/media/AppTrackData");
+    gAppTrackDataClass = MakeGlobalRefOrDie(env, AppTrackDataClass);
+    gAppTrackDataCstor = GetMethodIDOrDie(env, AppTrackDataClass, "<init>",
+            "(Ljava/lang/String;ZFZ)V");
 
     jclass audioMixPortClass = FindClassOrDie(env, "android/media/AudioMixPort");
     gAudioMixPortClass = MakeGlobalRefOrDie(env, audioMixPortClass);
