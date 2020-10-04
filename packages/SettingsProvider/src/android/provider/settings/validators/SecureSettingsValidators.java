@@ -375,5 +375,6 @@ public class SecureSettingsValidators {
         VALIDATORS.put(Secure.TETHERING_ALLOW_VPN_UPSTREAMS, BOOLEAN_VALIDATOR);
         VALIDATORS.put(Secure.LAUNCHER_HIDDEN_APPS, APP_LIST_VALIDATOR);
         VALIDATORS.put(Secure.POWER_MENU_HIDE_ON_SECURE, BOOLEAN_VALIDATOR);
+        VALIDATORS.put(Secure.GESTURE_NAVBAR_LENGTH_MODE, new InclusiveIntegerRangeValidator(0, 2));
     }
 }
