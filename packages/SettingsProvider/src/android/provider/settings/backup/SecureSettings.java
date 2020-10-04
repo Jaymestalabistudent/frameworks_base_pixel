@@ -225,5 +225,6 @@ public class SecureSettings {
         Settings.Secure.LOCK_SCREEN_WEATHER_ENABLED,
         Settings.Secure.ACCESSIBILITY_FONT_SCALING_HAS_BEEN_CHANGED,
         Settings.Secure.POWER_MENU_HIDE_ON_SECURE,
+        Settings.Secure.GESTURE_NAVBAR_LENGTH_MODE,
     };
 }
