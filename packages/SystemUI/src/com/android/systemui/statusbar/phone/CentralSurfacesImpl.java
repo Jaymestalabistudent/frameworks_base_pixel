@@ -289,6 +289,9 @@ public class CentralSurfacesImpl implements CoreStartable, CentralSurfaces, Tune
     private static final String NAVIGATION_BAR_SHOW =
             "customsystem:" + Settings.System.NAVIGATION_BAR_SHOW;
 
+    private static final String QS_TRANSPARENCY =
+            "system:" + Settings.System.QS_TRANSPARENCY;
+
     private static final String BANNER_ACTION_CANCEL =
             "com.android.systemui.statusbar.banner_action_cancel";
     private static final String BANNER_ACTION_SETUP =
@@ -940,6 +943,8 @@ public class CentralSurfacesImpl implements CoreStartable, CentralSurfaces, Tune
         mColorExtractor.addOnColorsChangedListener(mOnColorsChangedListener);
 
         mTunerService.addTunable(this, NAVIGATION_BAR_SHOW);
+
+        mTunerService.addTunable(this, QS_TRANSPARENCY);
 
         mWindowManager = (WindowManager) mContext.getSystemService(Context.WINDOW_SERVICE);
         mDisplay = mContext.getDisplay();
@@ -4262,20 +4267,29 @@ public class CentralSurfacesImpl implements CoreStartable, CentralSurfaces, Tune
 
     @Override
     public void onTuningChanged(String key, String newValue) {
-        if (NAVIGATION_BAR_SHOW.equals(key) && mDisplayId == Display.DEFAULT_DISPLAY &&
-                mWindowManagerService != null) {
-            boolean navbarEnabled = NavbarUtils.isEnabled(mContext);
-            boolean hasNavbar = getNavigationBarView() != null;
-            if (navbarEnabled) {
-                if (!hasNavbar) {
-                    mNavigationBarController.onDisplayReady(mDisplayId);
-                }
-            } else {
-                if (hasNavbar) {
-                    mNavigationBarController.onDisplayRemoved(mDisplayId);
-                }
-            }
-        }
+        switch (key) {
+            case NOTIFICATION_MATERIAL_DISMISS:
+                mShowDimissButton =
+                        TunerService.parseIntegerSwitch(newValue, false);
+                updateDismissAllButton();
+                break;
+            case NOTIFICATION_MATERIAL_DISMISS_STYLE:
+                mClearAllButtonStyle =
+                        TunerService.parseInteger(newValue, 0);
+                updateDismissAllButton();
+                break;
+            case NOTIFICATION_MATERIAL_DISMISS_BGSTYLE:
+                mClearAllBgStyle =
+                        TunerService.parseInteger(newValue, 0);
+                updateDismissAllButton();
+                break;
+            case QS_TRANSPARENCY:
+                mScrimController.setCustomScrimAlpha(
+                        TunerService.parseInteger(newValue, 100));
+                break;
+            default:
+                break;
+         }
     }
 
     // End Extra BaseStatusBarMethods.
