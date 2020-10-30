@@ -5767,30 +5767,21 @@ public final class Settings {
 
        
         /**
-         * If On-The-Go should be displayed at the power menu.
+         * Adaptive playback
+         * Automatically pause media when the volume is muted and
+         * will resume automatically when volume is restored.
+         *   0 = disabled
+         *   1 = enabled
          * @hide
          */
-        public static final String GLOBAL_ACTIONS_ONTHEGO = "global_actions_onthego";
+        public static final String ADAPTIVE_PLAYBACK_ENABLED = "adaptive_playback_enabled";
 
         /**
-         * The alpha value of the On-The-Go overlay.
+         * Adaptive playback's timeout in ms
          * @hide
          */
-        public static final String ON_THE_GO_ALPHA = "on_the_go_alpha";
+        public static final String ADAPTIVE_PLAYBACK_TIMEOUT = "adaptive_playback_timeout";
 
-        /**
-         * Whether the service should restart itself or not.
-         * @hide
-         */
-        public static final String ON_THE_GO_SERVICE_RESTART = "on_the_go_service_restart";
-
-        /**
-         * The camera instance to use.
-         * 0 = Rear Camera
-         * 1 = Front Camera
-         * @hide
-         */
-        public static final String ON_THE_GO_CAMERA = "on_the_go_camera";
 
         /**
          * Whether to enable Smart Pixels
@@ -5973,6 +5964,8 @@ public final class Settings {
             PRIVATE_SETTINGS.add(HIGH_TOUCH_POLLING_RATE_ENABLE);
             PRIVATE_SETTINGS.add(SENSOR_BLOCK);
             PRIVATE_SETTINGS.add(LOCKSCREEN_PIN_SCRAMBLE_LAYOUT);
+            PRIVATE_SETTINGS.add(ADAPTIVE_PLAYBACK_ENABLED);
+            PRIVATE_SETTINGS.add(ADAPTIVE_PLAYBACK_TIMEOUT);
         }
 
         /**
