@@ -5746,6 +5746,18 @@ public final class Settings {
 	 * @hide
 	 */
 	public static final String DISABLE_USERCARD = "disable_usercard";
+        
+        /**
+         * reTicker Status
+         * @hide
+         */
+        public static final String RETICKER_STATUS = "reticker_status";
+
+        /**
+         * reTicker Colored
+         * @hide
+         */
+        public static final String RETICKER_COLORED = "reticker_colored";
 
        
         /**
