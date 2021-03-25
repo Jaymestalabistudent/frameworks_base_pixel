@@ -46,6 +46,8 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Manages global window inset state in the system represented by {@link InsetsState}.
@@ -56,8 +58,7 @@ class InsetsStateController {
     private final InsetsState mState = new InsetsState();
     private final DisplayContent mDisplayContent;
 
-    private final ArrayMap<Integer, WindowContainerInsetsSourceProvider> mProviders =
-            new ArrayMap<>();
+    private final HashMap<Integer, InsetsSourceProvider> mProviders = new HashMap<>();
     private final ArrayMap<InsetsControlTarget, ArrayList<Integer>> mControlTargetTypeMap =
             new ArrayMap<>();
     private final SparseArray<InsetsControlTarget> mTypeControlTargetMap = new SparseArray<>();
@@ -95,7 +96,15 @@ class InsetsStateController {
         mSourceProviderFunc = type -> {
             final InsetsSource source = mState.getSource(type);
             if (type == ITYPE_IME) {
-                return new ImeInsetsSourceProvider(source, this, mDisplayContent);
+                for (InsetsSourceProvider otherProvider : mProviders.values()) {
+                    if (otherProvider.overridesImeFrame()) {
+                        InsetsSource override =
+                                new InsetsSource(
+                                        state.getSource(otherProvider.getSource().getType()));
+                        override.setFrame(otherProvider.getImeOverrideFrame());
+                        state.addSource(override);
+                    }
+                }
             }
             return new WindowContainerInsetsSourceProvider(source, this, mDisplayContent);
         };
@@ -145,9 +154,9 @@ class InsetsStateController {
      * Called when a layout pass has occurred.
      */
     void onPostLayout() {
-        Trace.traceBegin(TRACE_TAG_WINDOW_MANAGER, "ISC.onPostLayout");
-        for (int i = mProviders.size() - 1; i >= 0; i--) {
-            mProviders.valueAt(i).onPostLayout();
+        mState.setDisplayFrame(mDisplayContent.getBounds());
+        for (InsetsSourceProvider provider : mProviders.values()) {
+            provider.onPostLayout();
         }
         if (!mLastState.equals(mState)) {
             mLastState.set(mState, true /* copySources */);
@@ -201,8 +210,24 @@ class InsetsStateController {
         if (changed) {
             notifyInsetsChanged();
             mDisplayContent.updateSystemGestureExclusion();
-            mDisplayContent.updateKeepClearAreas();
-            mDisplayContent.getDisplayPolicy().updateSystemBarAttributes();
+            mDisplayContent.getDisplayPolicy().updateSystemUiVisibilityLw();
+        }
+    }
+
+    /**
+     * Computes insets state of the insets provider window in the display frames.
+     *
+     * @param state The output state.
+     * @param win The owner window of insets provider.
+     * @param displayFrames The display frames to create insets source.
+     * @param windowFrames The specified frames to represent the owner window.
+     */
+    void computeSimulatedState(InsetsState state, WindowState win, DisplayFrames displayFrames,
+            WindowFrames windowFrames) {
+        for (final InsetsSourceProvider provider : mProviders.values()) {
+            if (provider.mWin == win) {
+                state.addSource(provider.createSimulatedSource(displayFrames, windowFrames));
+            }
         }
     }
 
@@ -341,8 +366,7 @@ class InsetsStateController {
             return;
         }
         mDisplayContent.mWmService.mAnimator.addAfterPrepareSurfacesRunnable(() -> {
-            for (int i = mProviders.size() - 1; i >= 0; i--) {
-                final WindowContainerInsetsSourceProvider provider = mProviders.valueAt(i);
+            for (final InsetsSourceProvider provider : mProviders.values()) {
                 provider.onSurfaceTransactionApplied();
             }
             final ArraySet<InsetsControlTarget> newControlTargets = new ArraySet<>();
@@ -380,9 +404,11 @@ class InsetsStateController {
             pw.println(InsetsState.typeToString(mTypeControlTargetMap.keyAt(i)) + " -> "
                     + mTypeControlTargetMap.valueAt(i));
         }
-        pw.println(prefix + "InsetsSourceProviders:");
-        for (int i = mProviders.size() - 1; i >= 0; i--) {
-            mProviders.valueAt(i).dump(pw, prefix + "  ");
+        pw.println(prefix + "  " + "InsetsSourceProviders map:");
+        for (Map.Entry<Integer, InsetsSourceProvider> entry : mProviders.entrySet()) {
+            pw.print(prefix + "  ");
+            pw.println(InsetsState.typeToString(entry.getKey()) + " -> ");
+            entry.getValue().dump(pw, prefix);
         }
     }
 }
