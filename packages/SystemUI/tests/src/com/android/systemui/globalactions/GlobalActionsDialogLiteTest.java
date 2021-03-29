@@ -61,6 +61,7 @@ import com.android.systemui.SysuiTestCase;
 import com.android.systemui.animation.DialogLaunchAnimator;
 import com.android.systemui.broadcast.BroadcastDispatcher;
 import com.android.systemui.colorextraction.SysuiColorExtractor;
+import com.android.systemui.controls.dagger.ControlsComponent;
 import com.android.systemui.plugins.GlobalActions;
 import com.android.systemui.settings.UserContextProvider;
 import com.android.systemui.settings.UserTracker;
@@ -69,7 +70,6 @@ import com.android.systemui.statusbar.VibratorHelper;
 import com.android.systemui.statusbar.phone.CentralSurfaces;
 import com.android.systemui.statusbar.policy.ConfigurationController;
 import com.android.systemui.statusbar.policy.KeyguardStateController;
-import com.android.systemui.telephony.TelephonyListenerManager;
 import com.android.systemui.util.RingerModeLiveData;
 import com.android.systemui.util.RingerModeTracker;
 import com.android.systemui.util.settings.GlobalSettings;
@@ -99,7 +99,6 @@ public class GlobalActionsDialogLiteTest extends SysuiTestCase {
     @Mock private DevicePolicyManager mDevicePolicyManager;
     @Mock private LockPatternUtils mLockPatternUtils;
     @Mock private BroadcastDispatcher mBroadcastDispatcher;
-    @Mock private TelephonyListenerManager mTelephonyListenerManager;
     @Mock private GlobalSettings mGlobalSettings;
     @Mock private SecureSettings mSecureSettings;
     @Mock private Resources mResources;
@@ -127,6 +126,7 @@ public class GlobalActionsDialogLiteTest extends SysuiTestCase {
     @Mock private DialogLaunchAnimator mDialogLaunchAnimator;
     @Mock private OnBackInvokedDispatcher mOnBackInvokedDispatcher;
     @Captor private ArgumentCaptor<OnBackInvokedCallback> mOnBackInvokedCallback;
+    @Mock private ControlsComponent mControlsComponent;
 
     private TestableLooper mTestableLooper;
 
@@ -148,7 +148,6 @@ public class GlobalActionsDialogLiteTest extends SysuiTestCase {
                 mDevicePolicyManager,
                 mLockPatternUtils,
                 mBroadcastDispatcher,
-                mTelephonyListenerManager,
                 mGlobalSettings,
                 mSecureSettings,
                 mVibratorHelper,
@@ -172,7 +171,8 @@ public class GlobalActionsDialogLiteTest extends SysuiTestCase {
                 mPackageManager,
                 Optional.of(mCentralSurfaces),
                 mKeyguardUpdateMonitor,
-                mDialogLaunchAnimator);
+                mDialogLaunchAnimator,
+                mControlsComponent);
         mGlobalActionsDialogLite.setZeroDialogPressDelayForTesting();
 
         ColorExtractor.GradientColors backdropColors = new ColorExtractor.GradientColors();
