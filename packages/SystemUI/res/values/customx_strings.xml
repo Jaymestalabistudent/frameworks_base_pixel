@@ -4,6 +4,10 @@
     <string name="accessibility_dpad_left">Cursor left</string>
     <string name="accessibility_dpad_right">Cursor right</string>
 
+    <!-- Label for current user in power menu options dialog -->
+    <string name="global_action_current_user">Current</string>
+    <string name="global_action_users">Users</string>
+
     <!-- Custom QS tiles -->
     <string name="tap_to_add_tiles">Tap on tiles to add or remove</string>
     <!-- Ambient display QS tile -->
