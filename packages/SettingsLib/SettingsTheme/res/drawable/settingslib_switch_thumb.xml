@@ -13,13 +13,17 @@
   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
   See the License for the specific language governing permissions and
   limitations under the License.
--->
-<resources>
-    <!-- Collapsing toolbar layout dimensions -->
+  -->
 
-    <dimen name="settingslib_toolbar_layout_height">80dp</dimen>
-    <dimen name="settingslib_scrim_visible_height_trigger">50dp</dimen>
-
-    <dimen name="expanded_title_margin_start">24dp</dimen>
-    <dimen name="expanded_title_margin_end">24dp</dimen>
-</resources>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:top="4dp"
+        android:left="4dp"
+        android:right="4dp"
+        android:bottom="4dp">
+        <shape android:shape="oval" >
+            <size android:height="20dp" android:width="20dp" />
+            <solid android:color="@color/settingslib_switch_thumb_color" />
+        </shape>
+    </item>
+</layer-list>
