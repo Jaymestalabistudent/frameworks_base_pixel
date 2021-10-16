@@ -308,7 +308,8 @@ public class InternetTile extends QSTileImpl<SignalState> {
             if (DEBUG) {
                 Log.d(TAG, "setWifiIndicators: " + indicators);
             }
-            if (!indicators.isDefault) {
+            mWifiInfo.mEnabled = indicators.enabled;
+            if (indicators.qsIcon == null || !indicators.isDefault) {
                 return;
             }
             synchronized (mWifiInfo) {
