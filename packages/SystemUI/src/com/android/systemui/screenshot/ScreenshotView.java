@@ -376,16 +376,6 @@ public class ScreenshotView extends FrameLayout implements
         mScrollChip = requireNonNull(mActionsContainer.findViewById(R.id.screenshot_scroll_chip));
         mDeleteChip = requireNonNull(mActionsContainer.findViewById(R.id.screenshot_delete_chip));
 
-        int swipePaddingPx = (int) FloatingWindowUtil.dpToPx(mDisplayMetrics, SWIPE_PADDING_DP);
-        TouchDelegate previewDelegate = new TouchDelegate(
-                new Rect(swipePaddingPx, swipePaddingPx, swipePaddingPx, swipePaddingPx),
-                mScreenshotPreview);
-        mScreenshotPreview.setTouchDelegate(previewDelegate);
-        TouchDelegate actionsDelegate = new TouchDelegate(
-                new Rect(swipePaddingPx, swipePaddingPx, swipePaddingPx, swipePaddingPx),
-                mActionsContainerBackground);
-        mActionsContainerBackground.setTouchDelegate(actionsDelegate);
-
         setFocusable(true);
         mActionsContainer.setScrollX(0);
 
@@ -717,8 +707,7 @@ public class ScreenshotView extends FrameLayout implements
         chips.add(mEditChip);
 
         mDeleteChip.setContentDescription(mContext.getString(R.string.screenshot_delete_label));
-        mDeleteChip.setIcon(Icon.createWithResource(mContext, R.drawable.ic_screenshot_delete),
-                true);
+        mDeleteChip.setIcon(Icon.createWithResource(mContext, R.drawable.ic_screenshot_delete), true);
         mDeleteChip.setOnClickListener(v -> {
             mDeleteChip.setIsPending(true);
             mEditChip.setIsPending(false);
@@ -740,7 +729,7 @@ public class ScreenshotView extends FrameLayout implements
             mPendingInteraction = PendingInteraction.PREVIEW;
         });
 
-        mScrollChip.setText(mContext.getString(R.string.screenshot_scroll_label));
+        //mScrollChip.setText(mContext.getString(R.string.screenshot_scroll_label));
         mScrollChip.setIcon(Icon.createWithResource(mContext,
                 R.drawable.ic_screenshot_scroll), true);
         chips.add(mScrollChip);
@@ -841,6 +830,10 @@ public class ScreenshotView extends FrameLayout implements
             } else {
                 startSharedTransition(imageData.editTransition.get());
             }
+        });
+        mDeleteChip.setPendingIntent(imageData.deleteAction.actionIntent, () -> {
+            mUiEventLogger.log(ScreenshotEvent.SCREENSHOT_DELETE_TAPPED);
+            animateDismissal();
         });
         mDeleteChip.setPendingIntent(imageData.deleteAction.actionIntent, () -> {
             mUiEventLogger.log(ScreenshotEvent.SCREENSHOT_DELETE_TAPPED);
