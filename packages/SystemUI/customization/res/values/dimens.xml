@@ -19,7 +19,23 @@
     <!-- Clock maximum font size (dp is intentional, to prevent any further scaling) -->
     <dimen name="large_clock_text_size">150dp</dimen>
     <dimen name="small_clock_text_size">86dp</dimen>
+    <dimen name="screenrecord_dot_size">48dp</dimen>
 
+    <!-- Network traffic -->
+    <dimen name="network_traffic_width">25sp</dimen>
+
+    <!-- Width of the battery icon in the status bar when set to circle style. -->
+    <dimen name="status_bar_battery_icon_circle_width">14.5dp</dimen>
+
+    <!-- Height of the big battery circle icon in the status bar. -->
+    <dimen name="status_bar_battery_bigcircle_icon_height">20.5dp</dimen>
+
+    <!-- Width of the big battery circle icon in the status bar. -->
+    <dimen name="status_bar_battery_bigcircle_icon_width">20.5dp</dimen>
+    
+    <!--     Privacy Indicators. -->
+    <dimen name="ongoing_appops_chip_main_padding">10dp</dimen>
+    <dimen name="ongoing_appops_chip_2_width">56dp</dimen>
     <!-- Default line spacing multiplier between hours and minutes of the keyguard clock -->
     <item name="keyguard_clock_line_spacing_scale" type="dimen" format="float">.7</item>
     <!-- Burmese line spacing multiplier between hours and minutes of the keyguard clock -->
