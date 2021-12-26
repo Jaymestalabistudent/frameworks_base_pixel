@@ -82,7 +82,18 @@ LOCAL_REQUIRED_MODULES := \
 	qqs_portrait_5x3 \
 	qqs_portrait_5x4 \
 	qqs_portrait_5x5 \
-	qqs_portrait_5x6
+	qqs_portrait_5x6 \
+	IconShapeCylinderOverlay \
+    IconShapeHeartOverlay \
+    IconShapeHexagonOverlay \
+    IconShapeLeafOverlay \
+    IconShapePebbleOverlay \
+    IconShapeRoundedRectOverlay \
+    IconShapeSquareOverlay \
+    IconShapeSquircleOverlay \
+    IconShapeTaperedRectOverlay \
+    IconShapeTeardropOverlay \
+    IconShapeVesselOverlay 
 
 include $(BUILD_PHONY_PACKAGE)
 include $(CLEAR_VARS)
