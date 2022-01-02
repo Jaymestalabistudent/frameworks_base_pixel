@@ -3,10 +3,14 @@ package com.android.systemui.statusbar.phone;
 import android.app.NotificationManager;
 import android.content.Context;
 import android.content.res.Resources;
+import android.database.ContentObserver;
 import android.graphics.Color;
 import android.graphics.Rect;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.Trace;
+import android.os.UserHandle;
+import android.provider.Settings;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.FrameLayout;
@@ -21,6 +25,7 @@ import com.android.internal.util.ContrastColorUtil;
 import com.android.settingslib.Utils;
 import com.android.systemui.R;
 import com.android.systemui.animation.Interpolators;
+import com.android.systemui.dagger.qualifiers.Main;
 import com.android.systemui.dagger.SysUISingleton;
 import com.android.systemui.demomode.DemoMode;
 import com.android.systemui.demomode.DemoModeController;
@@ -41,6 +46,7 @@ import com.android.systemui.statusbar.notification.collection.ListEntry;
 import com.android.systemui.statusbar.notification.collection.NotificationEntry;
 import com.android.systemui.statusbar.notification.stack.AnimationProperties;
 import com.android.systemui.statusbar.window.StatusBarWindowController;
+import com.android.systemui.util.settings.SystemSettings;
 import com.android.wm.shell.bubbles.Bubbles;
 
 import java.util.ArrayList;
@@ -76,6 +82,8 @@ public class NotificationIconAreaController implements
     private final Optional<Bubbles> mBubblesOptional;
     private final StatusBarWindowController mStatusBarWindowController;
     private final ScreenOffAnimationController mScreenOffAnimationController;
+    private final UnlockedScreenOffAnimationController mUnlockedScreenOffAnimationController;
+    private final SystemSettings mSystemSettings;
 
     private int mIconSize;
     private int mIconHPadding;
@@ -97,6 +105,7 @@ public class NotificationIconAreaController implements
     private int mAodIconTint;
     private boolean mAodIconsVisible;
     private boolean mShowLowPriority = true;
+    private boolean mShowNotificationCount = false;
 
     @VisibleForTesting
     final NotificationListener.NotificationSettingsListener mSettingsListener =
@@ -122,6 +131,9 @@ public class NotificationIconAreaController implements
             DarkIconDispatcher darkIconDispatcher,
             StatusBarWindowController statusBarWindowController,
             ScreenOffAnimationController screenOffAnimationController) {
+            UnlockedScreenOffAnimationController unlockedScreenOffAnimationController,
+            @Main Handler handler,
+            SystemSettings systemSettings) {
         mContrastColorUtil = ContrastColorUtil.getInstance(context);
         mContext = context;
         mStatusBarStateController = statusBarStateController;
@@ -136,11 +148,32 @@ public class NotificationIconAreaController implements
         mDemoModeController.addCallback(this);
         mStatusBarWindowController = statusBarWindowController;
         mScreenOffAnimationController = screenOffAnimationController;
+        mUnlockedScreenOffAnimationController = unlockedScreenOffAnimationController;
+
+        mSystemSettings = systemSettings;
+        updateShowNotificationCount();
+        final ContentObserver observer = new ContentObserver(handler) {
+            @Override
+            public void onChange(boolean selfChange) {
+                updateShowNotificationCount();
+                updateNotificationIcons();
+            }
+        };
+        mSystemSettings.registerContentObserverForUser(
+            Settings.System.getUriFor(Settings.System.STATUS_BAR_NOTIF_COUNT),
+            observer, UserHandle.USER_ALL);
+
         notificationListener.addNotificationSettingsListener(mSettingsListener);
 
         initializeNotificationAreaViews(context);
         reloadAodColor();
         darkIconDispatcher.addDarkReceiver(this);
+    }
+
+    private void updateShowNotificationCount() {
+        mShowNotificationCount = mSystemSettings.getIntForUser(Settings.System.STATUS_BAR_NOTIF_COUNT,
+            mContext.getResources().getBoolean(R.bool.config_statusBarShowNumber) ? 1 : 0,
+            UserHandle.USER_CURRENT) == 1;
     }
 
     protected View inflateIconArea(LayoutInflater inflater) {
@@ -450,6 +483,8 @@ public class NotificationIconAreaController implements
                 }
                 hostLayout.addView(v, i, params);
             }
+            v.setShowCount(mShowNotificationCount);
+            v.updateIconForced();
         }
 
         hostLayout.setChangingViewPositions(true);

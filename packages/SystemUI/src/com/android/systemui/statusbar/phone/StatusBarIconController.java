@@ -25,6 +25,8 @@ import static com.android.systemui.statusbar.phone.StatusBarIconHolder.TYPE_NETW
 import android.annotation.Nullable;
 import android.content.Context;
 import android.os.Bundle;
+import android.os.UserHandle;
+import android.provider.Settings;
 import android.text.TextUtils;
 import android.util.ArraySet;
 import android.view.Gravity;
@@ -390,38 +392,20 @@ public interface StatusBarIconController {
 
         protected ArrayList<String> mBlockList = new ArrayList<>();
 
-        public IconManager(
-                ViewGroup group,
-                StatusBarLocation location,
-                StatusBarPipelineFlags statusBarPipelineFlags,
-                WifiUiAdapter wifiUiAdapter,
-                MobileUiAdapter mobileUiAdapter,
-                MobileContextProvider mobileContextProvider
-        ) {
+        private final boolean mShowNotificationCount;
+
+        public IconManager(ViewGroup group, FeatureFlags featureFlags) {
+            mFeatureFlags = featureFlags;
             mGroup = group;
             mStatusBarPipelineFlags = statusBarPipelineFlags;
             mMobileContextProvider = mobileContextProvider;
             mContext = group.getContext();
             mIconSize = mContext.getResources().getDimensionPixelSize(
                     com.android.internal.R.dimen.status_bar_icon_size);
-            mLocation = location;
-
-            if (statusBarPipelineFlags.runNewMobileIconsBackend()) {
-                // This starts the flow for the new pipeline, and will notify us of changes if
-                // {@link StatusBarPipelineFlags#useNewMobileIcons} is also true.
-                mMobileIconsViewModel = mobileUiAdapter.getMobileIconsViewModel();
-                MobileIconsBinder.bind(mGroup, mMobileIconsViewModel);
-            } else {
-                mMobileIconsViewModel = null;
-            }
-
-            if (statusBarPipelineFlags.runNewWifiIconBackend()) {
-                // This starts the flow for the new pipeline, and will notify us of changes if
-                // {@link StatusBarPipelineFlags#useNewWifiIcon} is also true.
-                mWifiViewModel = wifiUiAdapter.bindGroup(mGroup, mLocation);
-            } else {
-                mWifiViewModel = null;
-            }
+            mShowNotificationCount = Settings.System.getIntForUser(mContext.getContentResolver(),
+                Settings.System.STATUS_BAR_NOTIF_COUNT,
+                mContext.getResources().getBoolean(R.bool.config_statusBarShowNumber) ? 1 : 0,
+                UserHandle.USER_CURRENT) == 1;
         }
 
         public boolean isDemoable() {
@@ -495,6 +479,7 @@ public interface StatusBarIconController {
         protected StatusBarIconView addIcon(int index, String slot, boolean blocked,
                 StatusBarIcon icon) {
             StatusBarIconView view = onCreateStatusBarIconView(slot, blocked);
+            view.setShowCount(mShowNotificationCount);
             view.set(icon);
             mGroup.addView(view, index, onCreateLayoutParams());
             return view;
