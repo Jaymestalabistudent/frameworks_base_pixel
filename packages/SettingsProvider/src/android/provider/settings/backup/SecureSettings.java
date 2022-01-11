@@ -225,6 +225,7 @@ public class SecureSettings {
         Settings.Secure.LOCK_SCREEN_WEATHER_ENABLED,
         Settings.Secure.ACCESSIBILITY_FONT_SCALING_HAS_BEEN_CHANGED,
         Settings.Secure.GESTURE_NAVBAR_LENGTH_MODE,
-        Settings.Secure.DISABLE_SECURE_TILES_ON_LOCKSCREEN
+        Settings.Secure.DISABLE_SECURE_TILES_ON_LOCKSCREEN,
+        Settings.Secure.SECURE_LOCKSCREEN_QS_DISABLED,
     };
 }
