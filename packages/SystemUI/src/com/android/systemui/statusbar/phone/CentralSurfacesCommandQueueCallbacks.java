@@ -69,6 +69,10 @@ import com.android.systemui.statusbar.policy.DeviceProvisionedController;
 import com.android.systemui.statusbar.policy.HeadsUpManager;
 import com.android.systemui.statusbar.policy.KeyguardStateController;
 import com.android.systemui.statusbar.policy.RemoteInputQuickSettingsDisabler;
+import com.android.systemui.statusbar.policy.TaskHelper;
+import com.android.systemui.statusbar.policy.SecureLockscreenQSDisabler;
+
+import dagger.Lazy;
 
 import java.util.Optional;
 
@@ -108,6 +112,9 @@ public class CentralSurfacesCommandQueueCallbacks implements CommandQueue.Callba
     private final Lazy<CameraLauncher> mCameraLauncherLazy;
     private final QuickSettingsController mQsController;
     private final QSHost mQSHost;
+    private final FeatureFlags mFeatureFlags;
+    private final TaskHelper mTaskHelper;
+    private final SecureLockscreenQSDisabler mSecureLockscreenQSDisabler;
 
     private static final VibrationAttributes HARDWARE_FEEDBACK_VIBRATION_ATTRIBUTES =
             VibrationAttributes.createForUsage(VibrationAttributes.USAGE_HARDWARE_FEEDBACK);
@@ -141,7 +148,11 @@ public class CentralSurfacesCommandQueueCallbacks implements CommandQueue.Callba
             SystemBarAttributesListener systemBarAttributesListener,
             Lazy<CameraLauncher> cameraLauncherLazy,
             UserTracker userTracker,
-            QSHost qsHost) {
+            QSHost qsHost,
+            ActivityStarter activityStarter,
+            FeatureFlags featureFlags,
+            TaskHelper taskHelper,
+            SecureLockscreenQSDisabler secureLockscreenQSDisabler) {
         mCentralSurfaces = centralSurfaces;
         mQsController = quickSettingsController;
         mContext = context;
@@ -168,6 +179,9 @@ public class CentralSurfacesCommandQueueCallbacks implements CommandQueue.Callba
         mCameraLauncherLazy = cameraLauncherLazy;
         mUserTracker = userTracker;
         mQSHost = qsHost;
+        mFeatureFlags = featureFlags;
+        mTaskHelper = taskHelper;
+        mSecureLockscreenQSDisabler = secureLockscreenQSDisabler;
 
         mVibrateOnOpening = resources.getBoolean(R.bool.config_vibrateOnIconAnimation);
         mCameraLaunchGestureVibrationEffect = getCameraGestureVibrationEffect(
@@ -263,20 +277,8 @@ public class CentralSurfacesCommandQueueCallbacks implements CommandQueue.Callba
 
         int state2BeforeAdjustment = state2;
         state2 = mRemoteInputQuickSettingsDisabler.adjustDisableFlags(state2);
-        Log.d(CentralSurfaces.TAG,
-                mDisableFlagsLogger.getDisableFlagsString(
-                        /* old= */ new DisableFlagsLogger.DisableState(
-                                mCentralSurfaces.getDisabled1(), mCentralSurfaces.getDisabled2()),
-                        /* new= */ new DisableFlagsLogger.DisableState(
-                                state1, state2BeforeAdjustment),
-                        /* newStateAfterLocalModification= */ new DisableFlagsLogger.DisableState(
-                                state1, state2)));
-
-        final int old1 = mCentralSurfaces.getDisabled1();
-        final int diff1 = state1 ^ old1;
-        mCentralSurfaces.setDisabled1(state1);
-
-        final int old2 = mCentralSurfaces.getDisabled2();
+        state2 = mSecureLockscreenQSDisabler.adjustDisableFlags(state2);
+        final int old2 = mDisabled2;
         final int diff2 = state2 ^ old2;
         mCentralSurfaces.setDisabled2(state2);
 
