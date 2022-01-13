@@ -97,7 +97,6 @@
     <!-- Accessibility floating menu -->
     <color name="accessibility_floating_menu_background">#B3000000</color> <!-- 70% -->
 
-    <color name="people_tile_background">@color/material_dynamic_secondary20</color>
 
     <!-- UDFPS colors -->
     <color name="udfps_enroll_icon">#7DA7F1</color>
@@ -107,4 +106,7 @@
     <color name="udfps_enroll_progress">#7DA7F1</color>
     <color name="udfps_enroll_progress_help">#607DA7F1</color>
     <color name="udfps_enroll_progress_help_with_talkback">#FFEE675C</color>
+    <color name="people_tile_background">@color/GM2_blue_300</color>
+
+    <color name="volume_seekbar_bg">@android:color/system_accent2_700</color>
 </resources>
