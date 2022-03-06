@@ -28,6 +28,7 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInstaller;
 import android.content.pm.PackageManager;
 import android.content.res.ColorStateList;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
@@ -43,10 +44,12 @@ import com.android.internal.widget.ButtonBarLayout;
 
 import java.io.File;
 
+import ink.kscope.packageinstaller.activity.BasePackageInstallerActivity;
+
 /**
  * Installation failed: Return status code to the caller or display failure UI to user
  */
-public class InstallFailed extends BottomAlertActivity {
+public class InstallFailed extends BasePackageInstallerActivity {
     private static final String LOG_TAG = InstallFailed.class.getSimpleName();
 
     /**
@@ -62,26 +65,26 @@ public class InstallFailed extends BottomAlertActivity {
     private void setExplanationFromErrorCode(int statusCode) {
         Log.d(LOG_TAG, "Installation status code: " + statusCode);
 
-        View viewToEnable;
+        int failedReason;
         switch (statusCode) {
             case PackageInstaller.STATUS_FAILURE_BLOCKED:
-                viewToEnable = requireViewById(R.id.install_failed_blocked);
+                failedReason = R.string.install_failed_blocked;
                 break;
             case PackageInstaller.STATUS_FAILURE_CONFLICT:
-                viewToEnable = requireViewById(R.id.install_failed_conflict);
+                failedReason = R.string.install_failed_conflict;
                 break;
             case PackageInstaller.STATUS_FAILURE_INCOMPATIBLE:
-                viewToEnable = requireViewById(R.id.install_failed_incompatible);
+                failedReason = R.string.install_failed_incompatible;
                 break;
             case PackageInstaller.STATUS_FAILURE_INVALID:
-                viewToEnable = requireViewById(R.id.install_failed_invalid_apk);
+                failedReason = R.string.install_failed_invalid_apk;
                 break;
             default:
-                viewToEnable = requireViewById(R.id.install_failed);
+                failedReason = R.string.install_failed;
                 break;
         }
 
-        viewToEnable.setVisibility(View.VISIBLE);
+        mInstallTipView.setText(failedReason);
     }
 
     @Override
@@ -120,15 +123,14 @@ public class InstallFailed extends BottomAlertActivity {
 
             // Store label for dialog
             mLabel = as.label;
-            View dialogView = View.inflate(this, R.layout.install_content_view, null);
-            ImageView appIcon = dialogView.requireViewById(R.id.app_icon2);
-            appIcon.setImageDrawable(as.icon);
-            TextView appName = dialogView.requireViewById(R.id.app_name2);
-            mAlert.setView(dialogView);
-            appName.setText(as.label);
-            mAlert.setButton(DialogInterface.BUTTON_POSITIVE, getString(R.string.done),
-                    (ignored, ignored2) -> finish(), null);
-            setupAlert();
+
+            hideCancelBtn();
+            mAppIconView.setImageDrawable(as.icon);
+            mAppLabelView.setText(as.label);
+            mInstallBtn.setText(R.string.done);
+            mInstallBtn.setOnClickListener(view -> finish());
+            mInstallStatusIconView.setImageResource(R.drawable.ic_install_failed);
+            mInstallStatusIconView.setVisibility(View.VISIBLE);
 
             Button mOk = mAlert.getButton(DialogInterface.BUTTON_POSITIVE);
             mOk.setBackgroundResource(R.drawable.dialog_sub_background);

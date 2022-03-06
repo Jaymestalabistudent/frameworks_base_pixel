@@ -34,6 +34,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Button;
 
 import com.android.internal.content.InstallLocationUtils;
@@ -52,6 +53,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 import static android.content.pm.PackageInstaller.SessionParams.UID_UNKNOWN;
+import ink.kscope.packageinstaller.activity.BasePackageInstallerActivity;
 
 /**
  * Send package to the package manager and handle results from package manager. Once the
@@ -59,7 +61,7 @@ import static android.content.pm.PackageInstaller.SessionParams.UID_UNKNOWN;
  * <p>This has two phases: First send the data to the package manager, then wait until the package
  * manager processed the result.</p>
  */
-public class InstallInstalling extends BottomAlertActivity {
+public class InstallInstalling extends BasePackageInstallerActivity {
     private static final String LOG_TAG = InstallInstalling.class.getSimpleName();
 
     private static final String SESSION_ID = "com.superior.packageinstaller.SESSION_ID";
@@ -110,27 +112,24 @@ public class InstallInstalling extends BottomAlertActivity {
         } else {
             final File sourceFile = new File(mPackageURI.getPath());
             PackageUtil.AppSnippet as = PackageUtil.getAppSnippet(this, appInfo, sourceFile);
-            View dialogView = View.inflate(this, R.layout.install_content_view, null);
-            ImageView appIcon = dialogView.requireViewById(R.id.app_icon2);
-            appIcon.setImageDrawable(as.icon);
-            TextView appName = dialogView.requireViewById(R.id.app_name2);
-            mAlert.setView(dialogView);
-            appName.setText(as.label);
-            mAlert.setButton(DialogInterface.BUTTON_NEGATIVE, getString(R.string.cancel),
-                    (ignored, ignored2) -> {
-                        if (mInstallingTask != null) {
-                            mInstallingTask.cancel(true);
-                        }
 
-                        if (mSessionId > 0) {
-                            getPackageManager().getPackageInstaller().abandonSession(mSessionId);
-                            mSessionId = 0;
-                        }
+            mAppIconView.setImageDrawable(as.icon);
+            mAppLabelView.setText(as.label);
+            mCancelBtn.setText(R.string.cancel);
+            hideInstallBtn();
+            mCancelBtn.setOnClickListener(view -> {
+                if (mInstallingTask != null) {
+                    mInstallingTask.cancel(true);
+                }
 
-                        setResult(RESULT_CANCELED);
-                        finish();
-                    }, null);
-            setupAlert();
+                if (mSessionId > 0) {
+                    getPackageManager().getPackageInstaller().abandonSession(mSessionId);
+                    mSessionId = 0;
+                }
+
+                setResult(RESULT_CANCELED);
+                finish();
+            });
             requireViewById(R.id.installing).setVisibility(View.VISIBLE);
 
             Button mCancel = mAlert.getButton(DialogInterface.BUTTON_NEGATIVE);
@@ -233,8 +232,6 @@ public class InstallInstalling extends BottomAlertActivity {
                             PackageManager.INSTALL_FAILED_INTERNAL_ERROR, null);
                 }
             }
-
-            mCancelButton = mAlert.getButton(DialogInterface.BUTTON_NEGATIVE);
         }
     }
 
@@ -283,7 +280,7 @@ public class InstallInstalling extends BottomAlertActivity {
                 mInstallingTask.execute();
             } else {
                 // we will receive a broadcast when the install is finished
-                mCancelButton.setEnabled(false);
+                mCancelBtn.setEnabled(false);
                 setFinishOnTouchOutside(false);
             }
         }
@@ -299,7 +296,7 @@ public class InstallInstalling extends BottomAlertActivity {
 
     @Override
     public void onBackPressed() {
-        if (mCancelButton.isEnabled()) {
+        if (mCancelBtn.isEnabled()) {
             super.onBackPressed();
         }
     }
@@ -423,7 +420,7 @@ public class InstallInstalling extends BottomAlertActivity {
                         PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_MUTABLE);
 
                 session.commit(pendingIntent.getIntentSender());
-                mCancelButton.setEnabled(false);
+                mCancelBtn.setEnabled(false);
                 setFinishOnTouchOutside(false);
             } else {
                 getPackageManager().getPackageInstaller().abandonSession(mSessionId);

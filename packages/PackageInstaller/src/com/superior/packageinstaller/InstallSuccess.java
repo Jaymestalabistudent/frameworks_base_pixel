@@ -25,6 +25,7 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.content.res.ColorStateList;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
@@ -41,10 +42,12 @@ import com.android.internal.widget.ButtonBarLayout;
 import java.io.File;
 import java.util.List;
 
+import ink.kscope.packageinstaller.activity.BasePackageInstallerActivity;
+
 /**
  * Finish installation: Return status code to the caller or display "success" UI to user
  */
-public class InstallSuccess extends BottomAlertActivity {
+public class InstallSuccess extends BasePackageInstallerActivity {
     private static final String LOG_TAG = InstallSuccess.class.getSimpleName();
 
     @Nullable
@@ -101,58 +104,20 @@ public class InstallSuccess extends BottomAlertActivity {
             return;
         }
 
-        View dialogView = View.inflate(this, R.layout.install_content_view, null);
-        ImageView appIcon = dialogView.requireViewById(R.id.app_icon2);
-        appIcon.setImageDrawable(mAppSnippet.icon);
-        TextView appName = dialogView.requireViewById(R.id.app_name2);
-        mAlert.setView(dialogView);
-        appName.setText(mAppSnippet.label);
-        mAlert.setButton(DialogInterface.BUTTON_POSITIVE, getString(R.string.launch), null,
-                null);
-        mAlert.setButton(DialogInterface.BUTTON_NEGATIVE, getString(R.string.done),
-                (ignored, ignored2) -> {
-                    if (mAppPackageName != null) {
-                        Log.i(LOG_TAG, "Finished installing " + mAppPackageName);
-                    }
-                    finish();
-                }, null);
-        setupAlert();
-        requireViewById(R.id.install_success).setVisibility(View.VISIBLE);
-            Button mOk = mAlert.getButton(DialogInterface.BUTTON_POSITIVE);
-            Button mCancel = mAlert.getButton(DialogInterface.BUTTON_NEGATIVE);
-            mOk.setBackgroundResource(R.drawable.dialog_sub_background);
-            mOk.setTextColor(getColorAttrDefaultColor(this, android.R.attr.textColorPrimaryInverse));
-            mOk.setBackgroundTintList(ColorStateList.valueOf(getColorAttrDefaultColor(this, android.R.attr.colorAccent)));
-            mCancel.setBackgroundResource(R.drawable.dialog_sub_background);
-            mCancel.setBackgroundTintList(ColorStateList.valueOf(adjustAlpha(getColorAttrDefaultColor(this, android.R.attr.colorForeground), 0.1f)));
-            mCancel.setTextColor(getColorAttrDefaultColor(this, android.R.attr.textColorPrimary));
-            ButtonBarLayout buttonBarLayout = ((ButtonBarLayout) mOk.getParent());
-            FrameLayout.LayoutParams lp = (FrameLayout.LayoutParams) buttonBarLayout.getLayoutParams();
-            lp.width = LinearLayout.LayoutParams.MATCH_PARENT;
-            lp.gravity = Gravity.CENTER;
-            int defaultMargin = getResources().getDimensionPixelOffset(R.dimen.header_margin_start);
-            lp.leftMargin = defaultMargin;
-            lp.rightMargin = defaultMargin;
-            lp.topMargin = defaultMargin;
-            lp.bottomMargin = defaultMargin;
-            for (int i = 0; i < buttonBarLayout.getChildCount(); i++) {
-                View child = buttonBarLayout.getChildAt(i);
-                if (child.getVisibility() != View.VISIBLE) {
-                    child.setVisibility(View.GONE);
-                } else {
-                    LinearLayout.LayoutParams lpb = (LinearLayout.LayoutParams) child.getLayoutParams();
-                    lpb.weight = 1;
-                    lpb.width = LinearLayout.LayoutParams.MATCH_PARENT;
-                    lpb.height = getResources().getDimensionPixelSize(R.dimen.alert_dialog_button_bar_height);
-                    lpb.gravity = Gravity.CENTER;
-                    int spacing = defaultMargin / 2;
-                    if (child.getId() == android.R.id.button1)
-                        lpb.leftMargin = spacing;
-                    else
-                        lpb.rightMargin = spacing;
-                }
+        mAppIconView.setImageDrawable(mAppSnippet.icon);
+        mAppLabelView.setText(mAppSnippet.label);
+        mInstallBtn.setText(R.string.launch);
+        mCancelBtn.setText(R.string.done);
+        mCancelBtn.setOnClickListener(view -> {
+            if (mAppPackageName != null) {
+                Log.i(LOG_TAG, "Finished installing " + mAppPackageName);
             }
-            buttonBarLayout.setLayoutParams(lp);
+            finish();
+        });
+        mInstallTipView.setText(R.string.kscope_install_done);
+        mInstallStatusIconView.setImageResource(R.drawable.ic_install_done);
+        mInstallStatusIconView.setVisibility(View.VISIBLE);
+
         // Enable or disable "launch" button
         boolean enabled = false;
         if (mLaunchIntent != null) {
@@ -163,9 +128,8 @@ public class InstallSuccess extends BottomAlertActivity {
             }
         }
 
-        Button launchButton = mAlert.getButton(DialogInterface.BUTTON_POSITIVE);
         if (enabled) {
-            launchButton.setOnClickListener(view -> {
+            mInstallBtn.setOnClickListener(view -> {
                 try {
                     startActivity(mLaunchIntent);
                 } catch (ActivityNotFoundException | SecurityException e) {
@@ -174,7 +138,7 @@ public class InstallSuccess extends BottomAlertActivity {
                 finish();
             });
         } else {
-            launchButton.setEnabled(false);
+            hideInstallBtn();
         }
     }
 }
