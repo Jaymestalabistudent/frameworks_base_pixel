@@ -18259,6 +18259,11 @@ public final class Settings {
                 "low_power_standby_active_during_maintenance";
 
         /**
+         * Control whether application downgrade is allowed.
+         * @hide
+         */
+        public static final String PM_DOWNGRADE_ALLOWED = "pm_downgrade_allowed";
+        /**
          * Timeout for the system server watchdog.
          *
          * @see {@link com.android.server.Watchdog}.
