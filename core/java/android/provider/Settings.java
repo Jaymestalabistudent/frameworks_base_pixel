@@ -6204,6 +6204,14 @@ public final class Settings {
         */
        public static final String SETTINGS_DASHBOARD_STYLE = "settings_dashboard_style";
 
+
+        /**
+         * Settings Dashboard Style
+         * @hide
+         */
+        public static final String SETTINGS_DASHBOARD_GMS = "settings_dashboard_gms";
+
+        
        /**
          * Whether to enable smart 5G mode
          * @hide
