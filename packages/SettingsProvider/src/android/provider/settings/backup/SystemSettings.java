@@ -94,5 +94,6 @@ public class SystemSettings {
         Settings.System.QQS_LAYOUT,
         Settings.System.STATUS_BAR_NOTIF_COUNT,
         Settings.System.NAVIGATION_BAR_INVERSE,
+        Settings.System.BRIGHTNESS_SLIDER_POSITION,
     };
 }

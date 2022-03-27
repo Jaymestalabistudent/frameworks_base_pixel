@@ -153,8 +153,8 @@ public abstract class QSPanelControllerBase<T extends QSPanel> extends ViewContr
             UiEventLogger uiEventLogger,
             QSLogger qsLogger,
             DumpManager dumpManager,
-	    @Main Handler mainHandler,
-	    SystemSettings systemSettings
+            @Main Handler mainHandler,
+            SystemSettings systemSettings
     ) {
         super(view);
         mHost = host;
@@ -166,22 +166,31 @@ public abstract class QSPanelControllerBase<T extends QSPanel> extends ViewContr
         mQSLogger = qsLogger;
         mDumpManager = dumpManager;
         mShouldUseSplitNotificationShade =
-                LargeScreenUtils.shouldUseSplitNotificationShade(getResources());
+                Utils.shouldUseSplitNotificationShade(getResources());
         mSystemSettings = systemSettings;
-	mSettingsObserver = new ContentObserver(mainHandler) {
+        mSettingsObserver = new ContentObserver(mainHandler) {
             @Override
             public void onChange(boolean selfChange, @Nullable Uri uri) {
-                     if (uri == null) return;
-		     final String key = uri.getLastPathSegment();
-		     if (key == null) return;
-		     handleSettingsChange(key);
-	    }
-	};
+                if (uri == null) return;
+                final String key = uri.getLastPathSegment();
+                if (key == null) return;
+                handleSettingsChange(key);
+            }
+        };
     }
 
     protected boolean handleSettingsChange(@NonNull String key) {
-    	//to-do add required functionalities in future here
+        if (Settings.System.BRIGHTNESS_SLIDER_POSITION.equals(key)) {
+            mView.updateBrightnessView(isSliderAtTop());
+            return true;
+        }
         return false;
+    }
+
+    private boolean isSliderAtTop() {
+        return mSystemSettings.getIntForUser(
+            Settings.System.BRIGHTNESS_SLIDER_POSITION,
+            0, UserHandle.USER_CURRENT) == 0;
     }
 
     @Override
@@ -205,6 +214,8 @@ public abstract class QSPanelControllerBase<T extends QSPanel> extends ViewContr
     protected void onViewAttached() {
         registerObserver(Settings.System.QS_TILE_LABEL_HIDE);
         registerObserver(Settings.System.QS_TILE_VERTICAL_LAYOUT);
+        mView.updateBrightnessView(isSliderAtTop());
+        registerObserver(Settings.System.BRIGHTNESS_SLIDER_POSITION);
         mQsTileRevealController = createTileRevealController();
         if (mQsTileRevealController != null) {
             mQsTileRevealController.setExpansion(mRevealExpansion);
@@ -241,6 +252,7 @@ public abstract class QSPanelControllerBase<T extends QSPanel> extends ViewContr
         }
         mRecords.clear();
         mDumpManager.unregisterDumpable(mView.getDumpableTag());
+        mSystemSettings.unregisterContentObserver(mSettingsObserver);
     }
 
     @Nullable
@@ -393,6 +405,7 @@ public abstract class QSPanelControllerBase<T extends QSPanel> extends ViewContr
                     mView.getDumpableTag());
             mUsingHorizontalLayout = horizontal;
             mView.setUsingHorizontalLayout(mUsingHorizontalLayout, mMediaHost.getHostView(), force);
+            updateBrightnessMirror();
             updateMediaDisappearParameters();
             if (mUsingHorizontalLayoutChangedListener != null) {
                 mUsingHorizontalLayoutChangedListener.run();
@@ -401,6 +414,8 @@ public abstract class QSPanelControllerBase<T extends QSPanel> extends ViewContr
         }
         return false;
     }
+
+    protected abstract void updateBrightnessMirror();
 
     /**
      * Update the way the media disappears based on if we're using the horizontal layout

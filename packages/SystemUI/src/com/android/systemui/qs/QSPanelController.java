@@ -30,6 +30,7 @@ import android.view.View;
 
 import com.android.internal.logging.MetricsLogger;
 import com.android.internal.logging.UiEventLogger;
+import com.android.internal.logging.nano.MetricsProto.MetricsEvent;
 import com.android.systemui.dagger.qualifiers.Main;
 import com.android.systemui.dump.DumpManager;
 import com.android.systemui.media.controls.ui.MediaHierarchyManager;
@@ -46,6 +47,7 @@ import com.android.systemui.statusbar.phone.StatusBarKeyguardViewManager;
 import com.android.systemui.statusbar.policy.BrightnessMirrorController;
 import com.android.systemui.tuner.TunerService;
 import com.android.systemui.util.settings.SystemSettings;
+import com.android.systemui.util.Utils;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -57,6 +59,7 @@ import javax.inject.Named;
 public class QSPanelController extends QSPanelControllerBase<QSPanel> {
 
     private final TunerService mTunerService;
+    private final QSSecurityFooter mQsSecurityFooter;
     private final QSCustomizerController mQsCustomizerController;
     private final QSTileRevealController.Factory mQsTileRevealControllerFactory;
     private final FalsingManager mFalsingManager;
@@ -76,21 +79,19 @@ public class QSPanelController extends QSPanelControllerBase<QSPanel> {
     };
 
     @Inject
-    QSPanelController(QSPanel view, TunerService tunerService,
-            QSHost qsHost, QSCustomizerController qsCustomizerController,
+    QSPanelController(QSPanel view, QSSecurityFooter qsSecurityFooter,
+            QSTileHost qstileHost, QSCustomizerController qsCustomizerController,
             @Named(QS_USING_MEDIA_PLAYER) boolean usingMediaPlayer,
             @Named(QS_PANEL) MediaHost mediaHost,
             QSTileRevealController.Factory qsTileRevealControllerFactory,
             DumpManager dumpManager, MetricsLogger metricsLogger, UiEventLogger uiEventLogger,
             QSLogger qsLogger, BrightnessController.Factory brightnessControllerFactory,
             BrightnessSliderController.Factory brightnessSliderFactory,
-            FalsingManager falsingManager,
-            StatusBarKeyguardViewManager statusBarKeyguardViewManager,
+            FalsingManager falsingManager, CommandQueue commandQueue,
             @Main Handler mainHandler, SystemSettings systemSettings) {
-        super(view, qsHost, qsCustomizerController, usingMediaPlayer, mediaHost,
-                metricsLogger, uiEventLogger, qsLogger, dumpManager,
-                mainHandler, systemSettings);
-        mTunerService = tunerService;
+        super(view, qstileHost, qsCustomizerController, usingMediaPlayer, mediaHost,
+                metricsLogger, uiEventLogger, qsLogger, dumpManager, mainHandler, systemSettings);
+        mQsSecurityFooter = qsSecurityFooter;
         mQsCustomizerController = qsCustomizerController;
         mQsTileRevealControllerFactory = qsTileRevealControllerFactory;
         mFalsingManager = falsingManager;
@@ -98,7 +99,8 @@ public class QSPanelController extends QSPanelControllerBase<QSPanel> {
         mBrightnessSliderController = brightnessSliderFactory.create(getContext(), mView);
         mView.setBrightnessView(mBrightnessSliderController.getRootView());
 
-        mBrightnessController = brightnessControllerFactory.create(mBrightnessSliderController);
+        mBrightnessController = brightnessControllerFactory.create(mBrightnessSliderController,
+            mView.getBrightnessView());
         mBrightnessMirrorHandler = new BrightnessMirrorHandler(mBrightnessController);
         mStatusBarKeyguardViewManager = statusBarKeyguardViewManager;
     }
@@ -140,24 +142,30 @@ public class QSPanelController extends QSPanelControllerBase<QSPanel> {
 
     @Override
     protected void onViewDetached() {
-        mTunerService.removeTunable(mView);
+        mView.removeOnConfigurationChangedListener(mOnConfigurationChangedListener);
         mBrightnessMirrorHandler.onQsPanelDettached();
         super.onViewDetached();
     }
 
     @Override
-    protected void onConfigurationChanged() {
-        mView.updateResources();
-        if (mView.isListening()) {
-            refreshAllTiles();
+    protected boolean handleSettingsChange(@NonNull String key) {
+        final boolean handled = super.handleSettingsChange(key);
+        if (key.equals(Settings.System.BRIGHTNESS_SLIDER_POSITION)) {
+            updateBrightnessMirror();
         }
+        return handled;
     }
 
     @Override
-    protected void onSplitShadeChanged(boolean shouldUseSplitNotificationShade) {
-        ((PagedTileLayout) mView.getOrCreateTileLayout())
-                .forceTilesRedistribution("Split shade state changed");
-        mView.setCanCollapse(!shouldUseSplitNotificationShade);
+    protected void updateBrightnessMirror() {
+        mBrightnessMirrorHandler.updateBrightnessMirror();
+    }
+
+    /**
+     * Set the header container of quick settings.
+     */
+    public void setHeaderContainer(@NonNull ViewGroup headerContainer) {
+        mView.setHeaderContainer(headerContainer);
     }
 
     /** */

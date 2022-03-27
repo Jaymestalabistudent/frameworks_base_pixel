@@ -53,19 +53,23 @@ public class BrightnessDialog extends Activity {
     private final DisplayTracker mDisplayTracker;
     private final Executor mMainExecutor;
     private final Handler mBackgroundHandler;
+    private final AutoBrightnessController.Factory mAutoBrightnessFactory;
 
     @Inject
     public BrightnessDialog(
             UserTracker userTracker,
             DisplayTracker displayTracker,
             BrightnessSliderController.Factory factory,
+            AutoBrightnessController.Factory autoBrightnessFactory,
             @Main Executor mainExecutor,
             @Background Handler bgHandler) {
         mUserTracker = userTracker;
         mDisplayTracker = displayTracker;
+        mBroadcastDispatcher = broadcastDispatcher;
         mToggleSliderFactory = factory;
         mMainExecutor = mainExecutor;
         mBackgroundHandler = bgHandler;
+        mAutoBrightnessFactory = autoBrightnessFactory;
     }
 
 
@@ -107,10 +111,13 @@ public class BrightnessDialog extends Activity {
 
         BrightnessSliderController controller = mToggleSliderFactory.create(this, frame);
         controller.init();
+        final AutoBrightnessController autoBrightnessController =
+            mAutoBrightnessFactory.create(controller.getRootView());
         frame.addView(controller.getRootView(), MATCH_PARENT, WRAP_CONTENT);
 
         mBrightnessController = new BrightnessController(
-                this, controller, mUserTracker, mDisplayTracker, mMainExecutor, mBackgroundHandler);
+                this, controller, mBroadcastDispatcher,
+                mBackgroundHandler, autoBrightnessController);
     }
 
     @Override
