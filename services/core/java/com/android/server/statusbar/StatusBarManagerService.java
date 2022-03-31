@@ -729,6 +729,11 @@ public class StatusBarManagerService extends IStatusBarService.Stub implements D
                     mBar.showMediaOutputSwitcher(packageName);
                 } catch (RemoteException ex) {
                 }
+        public void onCustomGestureAction(String action) {
+            if (mBar != null) {
+                try {
+                    mBar.onCustomGestureAction(action);
+                } catch (RemoteException e) { }
             }
         }
     };

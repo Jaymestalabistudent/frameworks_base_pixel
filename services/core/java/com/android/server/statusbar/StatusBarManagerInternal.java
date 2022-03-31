@@ -199,4 +199,5 @@ public interface StatusBarManagerInternal {
      * @see com.android.internal.statusbar.IStatusBar#showMediaOutputSwitcher
      */
     void showMediaOutputSwitcher(String packageName);
+    void onCustomGestureAction(String action);
 }
