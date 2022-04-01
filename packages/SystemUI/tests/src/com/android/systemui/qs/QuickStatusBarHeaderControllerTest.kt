@@ -64,7 +64,72 @@ class QuickStatusBarHeaderControllerTest : SysuiTestCase() {
         controller.setListening(true)
         verify(quickQSPanelController).setListening(true)
 
-        controller.setListening(false)
-        verify(quickQSPanelController).setListening(false)
+    @Test
+    fun testSingleCarrierListenerAttachedOnInit() {
+        controller.init()
+
+        verify(qsCarrierGroupController).setOnSingleCarrierChangedListener(any())
+    }
+
+    @Test
+    fun testSingleCarrierSetOnViewOnInit_false() {
+        `when`(qsCarrierGroupController.isSingleCarrier).thenReturn(false)
+        controller.init()
+
+    }
+
+    @Test
+    fun testSingleCarrierSetOnViewOnInit_true() {
+        `when`(qsCarrierGroupController.isSingleCarrier).thenReturn(true)
+        controller.init()
+
+    }
+
+    @Test
+    fun testRSSISlot_notCombined() {
+        `when`(featureFlags.isCombinedStatusBarSignalIconsEnabled).thenReturn(false)
+        controller.init()
+
+        val captor = argumentCaptor<List<String>>()
+        verify(view).onAttach(any(), any(), capture(captor), anyBoolean(), any())
+
+        assertThat(captor.value).containsExactly(
+            mContext.getString(com.android.internal.R.string.status_bar_mobile)
+        )
+    }
+
+    @Test
+    fun testRSSISlot_combined() {
+        `when`(featureFlags.isCombinedStatusBarSignalIconsEnabled).thenReturn(true)
+        controller.init()
+
+        val captor = argumentCaptor<List<String>>()
+        verify(view).onAttach(any(), any(), capture(captor), anyBoolean(), any())
+
+        assertThat(captor.value).containsExactly(
+            mContext.getString(com.android.internal.R.string.status_bar_no_calling),
+            mContext.getString(com.android.internal.R.string.status_bar_call_strength)
+        )
+    }
+
+    @Test
+    fun testSingleCarrierCallback() {
+        controller.init()
+        reset(view)
+
+        val captor = argumentCaptor<QSCarrierGroupController.OnSingleCarrierChangedListener>()
+        verify(qsCarrierGroupController).setOnSingleCarrierChangedListener(capture(captor))
+
+        captor.value.onSingleCarrierChanged(true)
+
+        captor.value.onSingleCarrierChanged(false)
+    }
+
+    private fun stubViews() {
+        `when`(view.findViewById<View>(anyInt())).thenReturn(mockView)
+        `when`(view.findViewById<StatusIconContainer>(R.id.statusIcons)).thenReturn(iconContainer)
+        `when`(view.findViewById<Clock>(R.id.clock)).thenReturn(clock)
+        `when`(view.requireViewById<VariableDateView>(R.id.date)).thenReturn(variableDateView)
+        `when`(view.requireViewById<VariableDateView>(R.id.date_clock)).thenReturn(variableDateView)
     }
 }
