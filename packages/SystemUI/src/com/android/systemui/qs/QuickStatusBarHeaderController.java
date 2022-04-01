@@ -36,14 +36,68 @@ class QuickStatusBarHeaderController extends ViewController<QuickStatusBarHeader
     ) {
         super(view);
         mQuickQSPanelController = quickQSPanelController;
+        mQSExpansionPathInterpolator = qsExpansionPathInterpolator;
+        mBatteryMeterViewController = batteryMeterViewController;
+        mFeatureFlags = featureFlags;
+        mInsetsProvider = statusBarContentInsetsProvider;
+
+        mClockView = mView.findViewById(R.id.clock);
+        mIconContainer = mView.findViewById(R.id.statusIcons);
+        mVariableDateViewControllerDateView = variableDateViewControllerFactory.create(
+                mView.requireViewById(R.id.date)
+        );
+        mVariableDateViewControllerClockDateView = variableDateViewControllerFactory.create(
+                mView.requireViewById(R.id.date_clock)
+        );
+
+        mIconManager = new StatusBarIconController.TintedIconManager(mIconContainer, featureFlags);
+        mDemoModeReceiver = new ClockDemoModeReceiver(mClockView);
+
+        // Don't need to worry about tuner settings for this icon
+        mBatteryMeterViewController.ignoreTunerUpdates();
+    }
+
+    @Override
+    protected void onInit() {
+        mBatteryMeterViewController.init();
     }
 
     @Override
     protected void onViewAttached() {
+        mPrivacyIconsController.onParentVisible();
+        mPrivacyIconsController.setChipVisibilityListener(this);
+        mIconContainer.addIgnoredSlot(
+                getResources().getString(com.android.internal.R.string.status_bar_managed_profile));
+        mIconContainer.setShouldRestrictIcons(false);
+        mStatusBarIconController.addIconGroup(mIconManager);
+
+        List<String> rssiIgnoredSlots;
+
+        if (mFeatureFlags.isCombinedStatusBarSignalIconsEnabled()) {
+            rssiIgnoredSlots = List.of(
+                    getResources().getString(com.android.internal.R.string.status_bar_no_calling),
+                    getResources().getString(com.android.internal.R.string.status_bar_call_strength)
+            );
+        } else {
+            rssiIgnoredSlots = List.of(
+                    getResources().getString(com.android.internal.R.string.status_bar_mobile)
+            );
+        }
+
+        mView.onAttach(mIconManager, mQSExpansionPathInterpolator, rssiIgnoredSlots,
+                mFeatureFlags.useCombinedQSHeaders(), mInsetsProvider);
+
+        mDemoModeController.addCallback(mDemoModeReceiver);
+
+        mVariableDateViewControllerDateView.init();
+        mVariableDateViewControllerClockDateView.init();
     }
 
     @Override
     protected void onViewDetached() {
+        mPrivacyIconsController.onParentInvisible();
+        mStatusBarIconController.removeIconGroup(mIconManager);
+        mDemoModeController.removeCallback(mDemoModeReceiver);
         setListening(false);
     }
 
