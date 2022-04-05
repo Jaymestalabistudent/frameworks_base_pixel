@@ -11792,6 +11792,14 @@ public final class Settings {
          */
         public static final String FACE_UNLOCK_METHOD = "face_unlock_method";
 
+        
+   
+  /**
+         * List of ; separated apps to be hidden from launcher.
+         * @hide
+         */
+        public static final String LAUNCHER_HIDDEN_APPS = "launcher_hidden_apps";
+
         /**
          * What happens when the user presses the Home button when the
          * phone is ringing.<br/>
