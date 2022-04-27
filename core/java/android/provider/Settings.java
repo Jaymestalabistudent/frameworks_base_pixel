@@ -5830,7 +5830,25 @@ public final class Settings {
          * @hide
          */
         public static final String SMART_5G = "smart_5g";
+        /**
+         * @hide
+         */
+        public static final String QS_TILE_LABEL_HIDE = "qs_tile_label_hide";
 
+        /**
+         * @hide
+         */
+        public static final String QS_TILE_VERTICAL_LAYOUT = "qs_tile_vertical_layout";
+
+        /**
+         * @hide
+         */
+        public static final String QS_LAYOUT = "qs_layout";
+
+        /**
+         * @hide
+         */
+        public static final String QQS_LAYOUT = "qqs_layout";
         /**
          * These are all public system settings
          *
