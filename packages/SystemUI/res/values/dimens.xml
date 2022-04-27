@@ -767,10 +767,10 @@
     <dimen name="multi_user_avatar_expanded_size">20dp</dimen>
 
     <!-- The font size of the time when collapsed in QS -->
-    <dimen name="qs_time_collapsed_size">14sp</dimen>
+    <dimen name="qs_time_collapsed_size">24sp</dimen>
 
     <!-- The font size of the time when expanded in QS -->
-    <dimen name="qs_time_expanded_size">14sp</dimen>
+    <dimen name="qs_time_expanded_size">48sp</dimen>
 
     <!-- The font size of the "emergency calls only" label in QS -->
     <dimen name="qs_emergency_calls_only_text_size">12sp</dimen>

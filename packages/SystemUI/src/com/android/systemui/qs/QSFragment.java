@@ -71,7 +71,6 @@ import com.android.systemui.statusbar.notification.stack.StackStateAnimator;
 import com.android.systemui.statusbar.phone.KeyguardBypassController;
 import com.android.systemui.statusbar.policy.BrightnessMirrorController;
 import com.android.systemui.statusbar.policy.RemoteInputQuickSettingsDisabler;
-import com.android.systemui.statusbar.policy.SecureLockscreenQSDisabler;
 import com.android.systemui.tuner.TunerService;
 import com.android.systemui.util.LifecycleFragment;
 import com.android.systemui.util.Utils;
@@ -205,7 +204,6 @@ public class QSFragment extends LifecycleFragment implements QS, CommandQueue.Ca
         mFooterActionsController = footerActionsController;
         mFooterActionsViewModelFactory = footerActionsViewModelFactory;
         mListeningAndVisibilityLifecycleOwner = new ListeningAndVisibilityLifecycleOwner();
-        mSecureLockscreenQSDisabler = secureLockscreenQSDisabler;
         mTunerService = tunerService;
     }
 
