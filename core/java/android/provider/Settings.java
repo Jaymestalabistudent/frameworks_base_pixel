@@ -12112,6 +12112,12 @@ public final class Settings {
         public static final String SPOOF_STORAGE_ENCRYPTION_STATUS = "spoof_storage_encryption_status";
 
         /**
+         * Control whether privacy indicator should be hidden.
+         * @hide
+         */
+        public static final String HIDE_PRIVACY_INDICATOR = "hide_privacy_indicator";
+
+        /**
          * These entries are considered common between the personal and the managed profile,
          * since the managed profile doesn't get to change them.
          */
