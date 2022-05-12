@@ -20,6 +20,7 @@ import android.annotation.IntRange
 import android.content.Context
 import android.provider.DeviceConfig
 import android.provider.DeviceConfig.NAMESPACE_PRIVACY
+import android.provider.Settings
 import com.android.systemui.R
 import com.android.systemui.dagger.SysUISingleton
 import com.android.systemui.flags.FeatureFlags
@@ -28,6 +29,7 @@ import com.android.systemui.privacy.PrivacyChipBuilder
 import com.android.systemui.privacy.PrivacyItem
 import com.android.systemui.privacy.PrivacyItemController
 import com.android.systemui.statusbar.policy.BatteryController
+import com.android.systemui.tuner.TunerService;
 import com.android.systemui.util.time.SystemClock
 import javax.inject.Inject
 
@@ -42,17 +44,23 @@ class SystemEventCoordinator @Inject constructor(
     private val privacyController: PrivacyItemController,
     private val context: Context,
     private val featureFlags: FeatureFlags
+    private val tunerService: TunerService
 ) {
     private lateinit var scheduler: SystemStatusAnimationScheduler
+    private var hidePrivacyIndicator: Boolean = false
 
     fun startObserving() {
         batteryController.addCallback(batteryStateListener)
+        */
+        tunerService.addTunable(hidePrivacyIndicatorTunable,
+                Settings.Secure.HIDE_PRIVACY_INDICATOR)
         privacyController.addCallback(privacyStateListener)
     }
 
     fun stopObserving() {
         batteryController.removeCallback(batteryStateListener)
         privacyController.removeCallback(privacyStateListener)
+        tunerService.removeTunable(hidePrivacyIndicatorTunable)
     }
 
     fun attachScheduler(s: SystemStatusAnimationScheduler) {
@@ -117,10 +125,11 @@ class SystemEventCoordinator @Inject constructor(
             }
 
             currentPrivacyItems = privacyItems
-            notifyListeners()
+            if (!hidePrivacyIndicator)
+                notifyListeners()
         }
 
-        private fun notifyListeners() {
+        fun notifyListeners() {
             if (currentPrivacyItems.isEmpty()) {
                 notifyPrivacyItemsEmpty()
             } else {
@@ -139,6 +148,19 @@ class SystemEventCoordinator @Inject constructor(
 
         private fun isChipAnimationEnabled(): Boolean {
             return DeviceConfig.getBoolean(NAMESPACE_PRIVACY, CHIP_ANIMATION_ENABLED, true)
+        }
+    }
+
+    private val hidePrivacyIndicatorTunable = object: TunerService.Tunable {
+        override fun onTuningChanged(key: String, newValue: String?) {
+            val newHidePrivacyIndicator = TunerService.parseIntegerSwitch(newValue, false)
+            if (hidePrivacyIndicator == newHidePrivacyIndicator)
+                return
+            hidePrivacyIndicator = newHidePrivacyIndicator
+            if (hidePrivacyIndicator)
+                notifyPrivacyItemsEmpty()
+            else
+                privacyStateListener.notifyListeners()
         }
     }
 }
