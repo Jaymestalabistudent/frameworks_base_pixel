@@ -18692,7 +18692,14 @@ public final class Settings {
              * @hide
              */
             public static final String CLOCKWORK_SYSUI_PACKAGE = "clockwork_sysui_package";
-
+       /**
+         * Whether strict standby policy should be used. When dismissing from recents,
+         * this will force stop apps with restricted battery usage and put them into
+         * RESTRICTED standby bucket. Also all restrictions will be imposed even when
+         * device is charging.
+         * @hide
+         */
+        public static final String STRICT_STANDBY_POLICY = "strict_standby_policy";
             /**
              * Setting indicating the name of the main activity of the Wear OS sysui.
              *
