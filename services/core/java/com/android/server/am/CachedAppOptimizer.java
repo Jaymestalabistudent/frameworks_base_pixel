@@ -55,6 +55,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -181,6 +182,8 @@ public final class CachedAppOptimizer {
 
     // Bitfield values for sync transactions received by frozen binder threads
     static final int TXNS_PENDING_WHILE_FROZEN = 4;
+
+    static final long FORCE_FREEZER_DEBOUNCE_TIMEOUT = 1000L;
 
     /**
      * This thread must be moved to the system background cpuset.
@@ -371,6 +374,8 @@ public final class CachedAppOptimizer {
     private final ProcessDependencies mProcessDependencies;
     private final ProcLocksReader mProcLocksReader;
     public static BoostFramework mPerf = new BoostFramework();
+
+    ForceFreezePolicy mForceFreezePolicy = new ForceFreezePolicy();
 
     public CachedAppOptimizer(ActivityManagerService am) {
         this(am, null, new DefaultProcessDependencies());
@@ -1148,12 +1153,36 @@ public final class CachedAppOptimizer {
     void unfreezeTemporarily(ProcessRecord app, String reason) {
         if (mUseFreezer) {
             synchronized (mProcLock) {
+                if (app.mOptRecord.ignoreTempUnfreeze())
+                    return;
                 if (app.mOptRecord.isFrozen() || app.mOptRecord.isPendingFreeze()) {
                     unfreezeAppLSP(app, reason);
                     freezeAppAsyncLSP(app);
                 }
             }
         }
+    }
+
+    @GuardedBy({"mAm", "mProcLock"})
+    void freezeAppAsyncLSPForce(ProcessRecord app) {
+        final ProcessCachedOptimizerRecord opt = app.mOptRecord;
+        // This app is now in non-force pending queue but we want
+        // to force freeze it right now. Reset flags for it.
+        // This could happened when an app has just been moved to
+        // restricted battery usage.
+        if (opt.isPendingFreeze() && !opt.ignoreTempUnfreeze()) {
+            mFreezeHandler.removeMessages(SET_FROZEN_PROCESS_MSG, app);
+            opt.setPendingFreeze(false);
+        }
+        if (opt.isPendingFreeze())
+            return;
+
+        opt.setIgnoreTempUnfreeze(true);
+        mFreezeHandler.sendMessageDelayed(
+                mFreezeHandler.obtainMessage(
+                    SET_FROZEN_PROCESS_MSG, DO_FREEZE, 1, app),
+                FORCE_FREEZER_DEBOUNCE_TIMEOUT);
+        opt.setPendingFreeze(true);
     }
 
     @GuardedBy({"mAm", "mProcLock"})
@@ -1174,8 +1203,42 @@ public final class CachedAppOptimizer {
         }
     }
 
-    @GuardedBy({"mAm", "mProcLock", "mFreezerLock"})
-    void unfreezeAppInternalLSP(ProcessRecord app, String reason) {
+    @GuardedBy({"mAm", "mProcLock"})
+    void unfreezeAppLSPForce(ProcessRecord app) {
+        final String name = app.processName;
+        final int pid = app.getPid();
+        final ProcessCachedOptimizerRecord opt = app.mOptRecord;
+        if (opt.isPendingFreeze()) {
+            mFreezeHandler.removeMessages(SET_FROZEN_PROCESS_MSG, app);
+            opt.setPendingFreeze(false);
+        }
+        opt.setIgnoreTempUnfreeze(false);
+
+        if (!opt.isFrozen()) {
+            return;
+        }
+
+        // If it is froze using the old way then we must unfreeze it using that
+        // way to make sure binder interfaces are unfroze too.
+        if (!opt.isForceFrozen()) {
+            unfreezeAppLSP(app);
+            return;
+        }
+
+        try {
+            Process.setProcessFrozen(pid, app.uid, false);
+
+            opt.setFreezeUnfreezeTime(SystemClock.uptimeMillis());
+            opt.setFrozen(false);
+            opt.setForceFrozen(false);
+            Slog.i(TAG_AM, "Force unfreeze " + pid + " " + name);
+        } catch (Exception e) {
+            Slog.e(TAG_AM, "Unable to force unfreeze " + pid + " " + name);
+        }
+    }
+
+    @GuardedBy({"mAm", "mProcLock"})
+    void unfreezeAppLSP(ProcessRecord app) {
         final int pid = app.getPid();
         final ProcessCachedOptimizerRecord opt = app.mOptRecord;
         if (opt.isPendingFreeze()) {
@@ -1186,9 +1249,19 @@ public final class CachedAppOptimizer {
                 Slog.d(TAG_AM, "Cancel freezing " + pid + " " + app.processName);
             }
         }
+        // Make sure this flag is cleared because the target app is now moved out from
+        // restricted battery usage.
+        opt.setIgnoreTempUnfreeze(false);
 
         opt.setFreezerOverride(false);
         if (pid == 0 || !opt.isFrozen()) {
+            return;
+        }
+
+        // If it is froze using the force way then we must unfreeze it using the force
+        // way to avoid binder failure.
+        if (opt.isForceFrozen()) {
+            unfreezeAppLSPForce(app);
             return;
         }
 
@@ -1310,6 +1383,7 @@ public final class CachedAppOptimizer {
             }
 
             mFrozenProcesses.delete(app.getPid());
+            mForceFreezePolicy.remove(app);
         }
     }
 
@@ -1758,8 +1832,13 @@ public final class CachedAppOptimizer {
         public void handleMessage(Message msg) {
             switch (msg.what) {
                 case SET_FROZEN_PROCESS_MSG:
+                    boolean force = msg.arg2 == 1;
+                    ProcessRecord record = (ProcessRecord) msg.obj;
                     synchronized (mAm) {
-                        freezeProcess((ProcessRecord) msg.obj);
+                        if (force)
+                            freezeProcessForce(record);
+                        else
+                            freezeProcess(record);
                     }
                     break;
                 case REPORT_UNFREEZE_MSG:
@@ -1782,6 +1861,33 @@ public final class CachedAppOptimizer {
                     + " " + proc.processName + " (" + reason + ")");
             unfreezeAppLSP(proc, OomAdjuster.OOM_ADJ_REASON_NONE);
             freezeAppAsyncLSP(proc);
+        }
+
+        @GuardedBy({"mAm"})
+        private void freezeProcessForce(final ProcessRecord proc) {
+            int pid = proc.getPid(); // Unlocked intentionally
+            final String name = proc.processName;
+            final ProcessCachedOptimizerRecord opt = proc.mOptRecord;
+
+            opt.setPendingFreeze(false);
+
+            synchronized (mProcLock) {
+                pid = proc.getPid();
+
+                if (pid == 0 || opt.isFrozen())
+                    return;
+
+                try {
+                    Process.setProcessFrozen(pid, proc.uid, true);
+
+                    opt.setFreezeUnfreezeTime(SystemClock.uptimeMillis());
+                    opt.setFrozen(true);
+                    opt.setForceFrozen(true);
+                    Slog.i(TAG_AM, "Force freeze " + pid + " " + name);
+                } catch (Exception e) {
+                    Slog.e(TAG_AM, "Unable to force freeze " + pid + " " + name);
+                }
+            }
         }
 
         @GuardedBy({"mAm"})
@@ -1965,6 +2071,55 @@ public final class CachedAppOptimizer {
                     unfreezeAppLSP(app, OomAdjuster.OOM_ADJ_REASON_NONE);
                 }
             }
+        }
+    }
+
+    static final class ForceFreezePolicy {
+        private static final String TAG = "ForceFreezePolicy";
+
+        HashMap<String, HashSet<ProcessRecord>> mRecords = new HashMap();
+
+        private boolean isForeground(ProcessRecord app) {
+            return app.mState.hasForegroundActivities() || app.mState.hasOverlayUi();
+        }
+
+        public void record(ProcessRecord app) {
+            String packageName = app.info.packageName;
+            HashSet<ProcessRecord> subprocesses = mRecords.get(packageName);
+            if (subprocesses == null) {
+                subprocesses = new HashSet<>();
+                mRecords.put(packageName, subprocesses);
+            }
+            subprocesses.add(app);
+        }
+
+        public void remove(ProcessRecord app) {
+            String packageName = app.info.packageName;
+            HashSet<ProcessRecord> subprocesses = mRecords.get(packageName);
+            if (subprocesses == null)
+                return;
+            subprocesses.remove(app);
+        }
+
+        public boolean shouldFreeze(ProcessRecord app) {
+            // We are not going to freeze any foreground process.
+            if (isForeground(app))
+                return false;
+
+            String packageName = app.info.packageName;
+            HashSet<ProcessRecord> subprocesses = mRecords.get(packageName);
+            if (subprocesses == null) {
+                Slog.wtf(TAG, app + " checked before setting up");
+                return false;
+            }
+
+            // We are not going to freeze a process that has any foreground
+            // process under same package.
+            for (ProcessRecord subprocess : subprocesses) {
+                if (isForeground(subprocess))
+                    return false;
+            }
+            return true;
         }
     }
 
