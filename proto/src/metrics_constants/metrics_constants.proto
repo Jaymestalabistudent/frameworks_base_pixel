@@ -7440,6 +7440,9 @@ message MetricsEvent {
 
     // CustomSettings constant
     CUSTOM_SETTINGS = 1999;
-
+    
+    // project orchid Metrics
+    ORCHIDOS_SETTINGS = 6772;    
+    
   }
 }
