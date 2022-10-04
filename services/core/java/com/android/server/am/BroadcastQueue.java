@@ -922,20 +922,15 @@ public final class BroadcastQueue {
             skip = true;
         }
 
-        // Ensure that broadcasts are only sent to other apps if they are explicitly marked as
-        // exported, or are System level broadcasts
-        if (!skip && !filter.exported && mService.checkComponentPermission(null, r.callingPid,
-                r.callingUid, filter.receiverList.uid, filter.exported)
-                != PackageManager.PERMISSION_GRANTED) {
-            Slog.w(TAG, "Exported Denial: sending "
-                    + r.intent.toString()
-                    + ", action: " + r.intent.getAction()
-                    + " from " + r.callerPackage
-                    + " (uid=" + r.callingUid + ")"
-                    + " due to receiver " + filter.receiverList.app
-                    + " (uid " + filter.receiverList.uid + ")"
-                    + " not specifying RECEIVER_EXPORTED");
-            skip = true;
+        if (!skip) {
+            synchronized (mService.mProcLock) {
+                if (filter.receiverList.app.mOptRecord.ignoreTempUnfreeze()) {
+                    Slog.i(TAG, "Skipping delivery " + r.intent
+                            + " to " + filter.receiverList.app
+                            + "(registered) because of force freeze");
+                    skip = true;
+                }
+            }
         }
 
         if (skip) {
@@ -1160,11 +1155,6 @@ public final class BroadcastQueue {
         return r.intent.toString()
                 + " from " + r.callerPackage + " (pid=" + r.callingPid
                 + ", uid=" + r.callingUid + ") to " + component.flattenToShortString();
-    }
-
-    private boolean isBootCompletedIntent(Intent intent) {
-        return intent.getAction() == Intent.ACTION_BOOT_COMPLETED ||
-                intent.getAction() == Intent.ACTION_LOCKED_BOOT_COMPLETED;
     }
 
     final void processNextBroadcastLocked(boolean fromMsg, boolean skipOomAdj) {
@@ -1553,14 +1543,7 @@ public final class BroadcastQueue {
                 info.activityInfo.name);
 
         boolean skip = false;
-        if (isBootCompletedIntent(r.intent) &&
-                mService.shouldSkipBootCompletedBroadcastForPackage(
-                        info.activityInfo.applicationInfo)) {
-            Slog.i(TAG, "BOOT_COMPLETED broadcast skipped for "
-                    + info.activityInfo.applicationInfo.packageName);
-            skip = true;
-        }
-        if (!skip && brOptions != null &&
+        if (brOptions != null &&
                 (info.activityInfo.applicationInfo.targetSdkVersion
                         < brOptions.getMinManifestReceiverApiLevel() ||
                 info.activityInfo.applicationInfo.targetSdkVersion
@@ -1841,6 +1824,27 @@ public final class BroadcastQueue {
         if (!skip && r.appOp != AppOpsManager.OP_NONE) {
             if (!noteOpForManifestReceiver(r.appOp, r, info, component)) {
                 skip = true;
+            }
+        }
+
+        if (!skip) {
+            if (app != null) {
+                synchronized (mService.mProcLock) {
+                    if (app.mOptRecord.ignoreTempUnfreeze()) {
+                        Slog.i(TAG, "Skipping delivery " + r.intent
+                                + " to " + app
+                                + " because of force freeze");
+                        skip = true;
+                    }
+                }
+            } else {
+                // Application not running, skip if blacklisted.
+                if (mService.isBackgroundRestricted(info.activityInfo.applicationInfo)) {
+                    Slog.i(TAG, "Skipping delivery " + r.intent
+                                + " to " + info.activityInfo.applicationInfo.packageName
+                                + " because of restriction");
+                    skip = true;
+                }
             }
         }
 
