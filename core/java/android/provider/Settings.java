@@ -4443,6 +4443,26 @@ public final class Settings {
         @Deprecated
         public static final String LOCK_PATTERN_TACTILE_FEEDBACK_ENABLED =
             "lock_pattern_tactile_feedback_enabled";
+    /**
+         * Sensor block per-package
+         * @hide
+         */
+        @Readable
+        public static final String SENSOR_BLOCK = "sensor_block";
+
+       /**
+         * Sensor blocked packages
+         * @hide
+         */
+        @Readable
+        public static final String SENSOR_BLOCKED_APP = "sensor_blocked_app";
+
+        /**
+         * Sensor blocked packages dummy
+         * @hide
+         */
+        @Readable
+        public static final String SENSOR_BLOCKED_APP_DUMMY = "sensor_blocked_app_dummy";
 
         /**
          * A formatted string of the next alarm that is set, or the empty string
@@ -4453,12 +4473,7 @@ public final class Settings {
         @Deprecated
         @Readable
         public static final String NEXT_ALARM_FORMATTED = "next_alarm_formatted";
-  /**
-         * Sensor block per-package
-         * @hide
-         */
-        @Readable
-        public static final String SENSOR_BLOCK = "sensor_block";
+ 
         /**
          * Scaling factor for fonts, float.
          */
