@@ -11896,6 +11896,13 @@ public final class Settings {
         @SystemApi(client = SystemApi.Client.MODULE_LIBRARIES)
         @SuppressLint("NoSettingsProvider")
         public static final String TETHERING_ALLOW_VPN_UPSTREAMS = "tethering_allow_vpn_upstreams";
+     
+        /**
+         *  Toggle the media squiggle animation
+         *  0 = 0ff, 1 = on
+         * @hide
+         */
+        public static final String SHOW_MEDIA_SQUIGGLE_ANIMATION = "show_media_squiggle_animation";
 
         /**
          * These entries are considered common between the personal and the managed profile,
