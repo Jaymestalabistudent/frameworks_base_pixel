@@ -84,7 +84,7 @@
             android:id="@android:id/progress"
             style="@style/customProgressBarStyleHorizontal"
             android:layout_width="match_parent"
-            android:layout_height="80dp"
+            android:layout_height="150dp"
             android:progressDrawable="@drawable/seekbar_drawable"
             android:indeterminateDrawable="@drawable/seekbar_progress" 
             />
