@@ -5784,6 +5784,11 @@ public final class Settings {
          * @hide
          */
         public static final String SMART_PIXELS_ON_POWER_SAVE = "smart_pixels_on_power_save";
+        
+        /**
+         * @hide
+         */
+        public static final String QS_TRANSPARENCY = "qs_transparency";
 
         /**
          * Keys we no longer back up under the current schema, but want to continue to
