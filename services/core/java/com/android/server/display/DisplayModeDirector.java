@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 The Android Open Source Project
+ * Copyright (C) 2023 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1170,6 +1170,8 @@ public class DisplayModeDirector {
                 Settings.Global.getUriFor(Settings.Global.LOW_POWER_MODE);
         private final Uri mMatchContentFrameRateSetting =
                 Settings.Secure.getUriFor(Settings.Secure.MATCH_CONTENT_FRAME_RATE);
+        private final Uri mLowPowerRefreshRateSetting =
+                Settings.System.getUriFor(Settings.System.LOW_POWER_REFRESH_RATE);
 
         private final Context mContext;
         private float mDefaultPeakRefreshRate;
@@ -1208,6 +1210,8 @@ public class DisplayModeDirector {
                     UserHandle.USER_SYSTEM);
             cr.registerContentObserver(mMatchContentFrameRateSetting, false /*notifyDescendants*/,
                     this);
+            cr.registerContentObserver(mLowPowerRefreshRateSetting, false /*notifyDescendants*/, this,
+                    UserHandle.USER_SYSTEM);
 
             Float deviceConfigDefaultPeakRefresh =
                     mDeviceConfigDisplaySettings.getDefaultPeakRefreshRate();
@@ -1248,7 +1252,8 @@ public class DisplayModeDirector {
                 if (mPeakRefreshRateSetting.equals(uri)
                         || mMinRefreshRateSetting.equals(uri)) {
                     updateRefreshRateSettingLocked();
-                } else if (mLowPowerModeSetting.equals(uri)) {
+                } else if (mLowPowerModeSetting.equals(uri)
+                        || mLowPowerRefreshRateSetting.equals(uri)) {
                     updateLowPowerModeSettingLocked();
                 } else if (mMatchContentFrameRateSetting.equals(uri)) {
                     updateModeSwitchingTypeSettingLocked();
@@ -1288,11 +1293,14 @@ public class DisplayModeDirector {
         }
 
         private void updateLowPowerModeSettingLocked() {
-            boolean inLowPowerMode = Settings.Global.getInt(mContext.getContentResolver(),
+            final ContentResolver cr = mContext.getContentResolver();
+            boolean inLowPowerMode = Settings.Global.getInt(cr,
                     Settings.Global.LOW_POWER_MODE, 0 /*default*/) != 0;
             final Vote vote;
             if (inLowPowerMode) {
-                vote = Vote.forRefreshRates(0f, 60f);
+                float lowPowerRefreshRate = Settings.System.getFloatForUser(cr,
+                    Settings.System.LOW_POWER_REFRESH_RATE, 60f /*default*/, cr.getUserId());
+                vote = Vote.forRefreshRates(0f, lowPowerRefreshRate);
             } else {
                 vote = null;
             }
