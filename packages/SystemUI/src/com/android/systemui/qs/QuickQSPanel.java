@@ -113,6 +113,23 @@ public class QuickQSPanel extends QSPanel {
             // No Brightness or Tooltip for you!
             super.onTuningChanged(key, "0");
         }
+        switch (key) {
+
+            case QS_TILE_ANIMATION_STYLE:
+                mAnimStyle =
+                       TunerService.parseInteger(newValue, 0);
+                break;
+            case QS_TILE_ANIMATION_DURATION:
+                mAnimDuration =
+                       TunerService.parseInteger(newValue, 1);
+                break;
+            case QS_TILE_ANIMATION_INTERPOLATOR:
+                mInterpolatorType =
+                       TunerService.parseInteger(newValue, 0);
+                break;
+            default:
+                break;
+         }
     }
 
     public int getNumQuickTiles() {

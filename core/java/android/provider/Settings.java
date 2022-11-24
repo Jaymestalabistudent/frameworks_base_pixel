@@ -5789,6 +5789,23 @@ public final class Settings {
          * @hide
          */
         public static final String QS_TRANSPARENCY = "qs_transparency";
+        /**
+         * Change quick settings tiles animation style
+         * @hide
+         */
+        public static final String QS_TILE_ANIMATION_STYLE = "qs_tile_animation_style";
+
+        /**
+         * Change quick settings tiles animation duration
+         * @hide
+         */
+        public static final String QS_TILE_ANIMATION_DURATION = "qs_tile_animation_duration";
+
+        /**
+         * Change quick settings tiles interpolator
+         * @hide
+         */
+        public static final String QS_TILE_ANIMATION_INTERPOLATOR = "qs_tile_animation_interpolator";
 
         /**
          * Keys we no longer back up under the current schema, but want to continue to
