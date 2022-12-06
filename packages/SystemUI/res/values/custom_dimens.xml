@@ -7,4 +7,7 @@
     <dimen name="status_bar_battery_icon_circle_width">14.5dp</dimen>
     <!-- Per app volume -->
     <dimen name="volume_row_app_icon_padding">8dp</dimen>
+
+    <!-- Maximum vertical offset of statusbar for burn-in protection -->
+    <dimen name="status_bar_offset_max_y">4dp</dimen>
 </resources>
