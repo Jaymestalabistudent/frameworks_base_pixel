@@ -11513,6 +11513,12 @@ public final class Settings {
          */
         public static final String LOCK_SCREEN_WEATHER_ENABLED = "lockscreen_weather_enabled";
 
+	      /**
+         * Quicksettings tile shape
+         * @hide
+         */
+        public static final String QS_TILE_SHAPE = "qs_tile_shape";
+
         /**
          * Enable udfps detection even when screen is off
          * Default value is 0
