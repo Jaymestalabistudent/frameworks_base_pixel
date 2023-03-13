@@ -5820,6 +5820,11 @@ public final class Settings {
         public static final String SMART_5G = "smart_5g";
 
         /**
+         * QS Header
+         * @hide
+         */
+        public static final String QS_HEADER_IMAGE = "qs_header_image";
+        /**
          * These are all public system settings
          *
          * @hide
