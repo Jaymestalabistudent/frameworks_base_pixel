@@ -5850,6 +5850,11 @@ public final class Settings {
         public static final String QS_UI_STYLE = "qs_ui_style";
 
         /**
+         * QS Header
+         * @hide
+         */
+        public static final String QS_HEADER_IMAGE = "qs_header_image";
+        /**
          * These are all public system settings
          *
          * @hide
