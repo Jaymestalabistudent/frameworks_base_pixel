@@ -107,4 +107,8 @@
     <color name="udfps_enroll_progress">#7DA7F1</color>
     <color name="udfps_enroll_progress_help">#607DA7F1</color>
     <color name="udfps_enroll_progress_help_with_talkback">#FFEE675C</color>
+
+    <!-- QS Styles -->
+    <color name="qs_translucent_bg">#0FFFFFFF</color>
+    <color name="qs_white_bg">@android:color/system_neutral1_0</color>
 </resources>
