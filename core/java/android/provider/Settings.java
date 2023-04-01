@@ -5812,6 +5812,11 @@ public final class Settings {
         * @hide
         */
        public static final String SETTINGS_DASHBOARD_STYLE = "settings_dashboard_style";
+        
+       /**
+         * @hide
+         */
+        public static final String QS_PANEL_STYLE = "qs_panel_style";
 
        /**
          * Whether to enable smart 5G mode
@@ -5838,6 +5843,11 @@ public final class Settings {
          * @hide
          */
         public static final String QQS_LAYOUT = "qqs_layout";
+
+        /**
+         * @hide
+         */
+        public static final String QS_UI_STYLE = "qs_ui_style";
 
         /**
          * These are all public system settings
