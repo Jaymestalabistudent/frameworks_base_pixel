@@ -191,7 +191,10 @@ class QuickStatusBarHeader @JvmOverloads constructor(
         layoutParams = lp
 
         val qqsLP = mHeaderQsPanel.layoutParams as ViewGroup.MarginLayoutParams
-        qqsLP.topMargin = context.resources.getDimensionPixelSize(R.dimen.qqs_control_header_height)
+        qqsLP.topMargin = if (largeScreenHeaderActive)
+            context.resources.getDimensionPixelSize(R.dimen.qqs_layout_margin_top)
+        else
+            context.resources.getDimensionPixelSize(R.dimen.large_screen_shade_header_min_height)
         mHeaderQsPanel.layoutParams = qqsLP
     }
 
