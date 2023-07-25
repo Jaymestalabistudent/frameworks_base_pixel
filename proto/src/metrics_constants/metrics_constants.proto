@@ -7446,5 +7446,8 @@ message MetricsEvent {
     
     // AWAKEN Metrics
     AWAKEN = 9872;
+    
+    // AfterLife Constant
+    AFTERLIFE = 1989;
   }
 }
