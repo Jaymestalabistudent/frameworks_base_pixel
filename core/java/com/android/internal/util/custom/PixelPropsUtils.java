@@ -47,12 +47,17 @@ public class PixelPropsUtils {
             "com.google.android.gms/.auth.uiflows.minutemaid.MinuteMaidActivity");
 
     private static final boolean DEBUG = false;
-
+    private static final Map<String, Object> propsToChangeS23;
     private static final Map<String, Object> propsToChangeGeneric;
     private static final Map<String, Object> propsToChangePixel7Pro;
     private static final Map<String, Object> propsToChangePixel5;
     private static final Map<String, Object> propsToChangePixelXL;
     private static final Map<String, ArrayList<String>> propsToKeep;
+
+    private static final String[] packagesToChangeS23 = {
+            "com.google.android.youtube",
+            "com.google.android.apps.youtube.music",
+    };
 
     private static final String[] packagesToChangePixel7Pro = {
             "com.google.android.apps.privacy.wildlife",
@@ -202,6 +207,12 @@ public class PixelPropsUtils {
         propsToChangeMI11.put("DEVICE", "star");
         propsToChangeMI11.put("PRODUCT", "star");
         propsToChangeMI11.put("MODEL", "M2102K1G");
+        propsToChangeS23 = new HashMap<>();
+        propsToChangeS23.put("BRAND", "samsung");
+        propsToChangeS23.put("MANUFACTURER", "samsung");
+        propsToChangeS23.put("DEVICE", "dm1q");
+        propsToChangeS23.put("MODEL", "SM-S911B");
+        propsToChangeS23.put("FINGERPRINT", "samsung/dm1qxxx/dm1q:13/TP1A.220624.014/S911BXXS3AWF7:user/release-keys");
     }
 
     private static boolean isGoogleCameraPackage(String packageName) {
@@ -306,6 +317,9 @@ public class PixelPropsUtils {
             }
             if (Arrays.asList(packagesToChangeMI11).contains(packageName)) {
                 propsToChange.putAll(propsToChangeMI11);
+            }
+            if (Arrays.asList(packagesToChangeS23).contains(packageName)) {
+                propsToChange.putAll(propsToChangeS23);
             }
 
             if (DEBUG) Log.d(TAG, "Defining props for: " + packageName);
