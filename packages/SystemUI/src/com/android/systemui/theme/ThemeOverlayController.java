@@ -71,6 +71,8 @@ import com.android.systemui.monet.ColorScheme;
 import com.android.systemui.monet.Style;
 import com.android.systemui.monet.TonalPalette;
 import com.android.systemui.settings.UserTracker;
+import com.android.systemui.statusbar.policy.ConfigurationController;
+import com.android.systemui.statusbar.policy.ConfigurationController.ConfigurationListener;
 import com.android.systemui.statusbar.policy.DeviceProvisionedController;
 import com.android.systemui.statusbar.policy.DeviceProvisionedController.DeviceProvisionedListener;
 import com.android.systemui.util.settings.SecureSettings;
@@ -152,6 +154,8 @@ public class ThemeOverlayController implements CoreStartable, Dumpable {
     private boolean mDeferredThemeEvaluation;
     // Determines if we should ignore THEME_CUSTOMIZATION_OVERLAY_PACKAGES setting changes.
     private boolean mSkipSettingChange;
+
+    private final ConfigurationController mConfigurationController;
 
     private final DeviceProvisionedListener mDeviceProvisionedListener =
             new DeviceProvisionedListener() {
@@ -379,6 +383,7 @@ public class ThemeOverlayController implements CoreStartable, Dumpable {
             FeatureFlags featureFlags,
             @Main Resources resources,
             WakefulnessLifecycle wakefulnessLifecycle,
+            ConfigurationController configurationController,
             SystemSettings systemSettings) {
         mContext = context;
         mIsMonochromaticEnabled = featureFlags.isEnabled(Flags.MONOCHROMATIC_THEME);
@@ -396,6 +401,7 @@ public class ThemeOverlayController implements CoreStartable, Dumpable {
         mUserTracker = userTracker;
         mResources = resources;
         mWakefulnessLifecycle = wakefulnessLifecycle;
+        mConfigurationController = configurationController;
         mSystemSettings = systemSettings;
         dumpManager.registerDumpable(TAG, this);
     }
@@ -457,6 +463,32 @@ public class ThemeOverlayController implements CoreStartable, Dumpable {
                         if (isCircleBattery) {
                             reevaluateSystemTheme(true /* forceReload */);
                         }
+                    }
+                },
+                UserHandle.USER_ALL);
+
+                mSecureSettings.registerContentObserverForUser(
+                Settings.Secure.getUriFor(Settings.Secure.SYSTEM_BLACK_THEME),
+                false,
+                new ContentObserver(mBgHandler) {
+                    @Override
+                    public void onChange(boolean selfChange, Collection<Uri> collection, int flags,
+                            int userId) {
+                        if (DEBUG) Log.d(TAG, "Overlay changed for user: " + userId);
+                        if (mUserTracker.getUserId() != userId) {
+                            return;
+                        }
+                        if (!mDeviceProvisionedController.isUserSetup(userId)) {
+                            Log.i(TAG, "Theme application deferred when setting changed.");
+                            mDeferredThemeEvaluation = true;
+                            return;
+                        }
+                        if (mSkipSettingChange) {
+                            if (DEBUG) Log.d(TAG, "Skipping setting change");
+                            mSkipSettingChange = false;
+                            return;
+                        }
+                        reevaluateSystemTheme(true /* forceReload */);
                     }
                 },
                 UserHandle.USER_ALL);
@@ -556,6 +588,7 @@ public class ThemeOverlayController implements CoreStartable, Dumpable {
                 }
             }
         });
+        mConfigurationController.addCallback(mConfigurationListener);
     }
 
     private void reevaluateSystemTheme(boolean forceReload) {
@@ -733,17 +766,20 @@ public class ThemeOverlayController implements CoreStartable, Dumpable {
             }
         }
 
-        if (colorSchemeIsApplied(managedProfiles)) {
-            Log.d(TAG, "Skipping overlay creation. Theme was already: " + mColorScheme);
-            return;
-        }
-
         managedProfiles.addAll(ParallelSpaceManager.getInstance().getParallelUserHandles());
         if (DEBUG) {
             Log.d(TAG, "Applying overlays: " + categoryToPackage.keySet().stream()
                     .map(key -> key + " -> " + categoryToPackage.get(key)).collect(
                             Collectors.joining(", ")));
         }
+
+        boolean nightMode = (mContext.getResources().getConfiguration().uiMode
+                & Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES;
+        boolean isBlackTheme = mSecureSettings.getInt(Settings.Secure.SYSTEM_BLACK_THEME, 0) == 1
+                                && nightMode;
+
+        mThemeManager.setIsBlackTheme(isBlackTheme);
+
         if (mNeedsOverlayCreation) {
             mNeedsOverlayCreation = false;
             mThemeManager.applyCurrentUserOverlays(categoryToPackage, new FabricatedOverlay[]{
@@ -753,6 +789,7 @@ public class ThemeOverlayController implements CoreStartable, Dumpable {
             mThemeManager.applyCurrentUserOverlays(categoryToPackage, null, currentUser,
                     managedProfiles);
         }
+        mThemeManager.applyBlackTheme(isBlackTheme);
     }
 
     private Style fetchThemeStyleFromSetting() {
@@ -785,6 +822,13 @@ public class ThemeOverlayController implements CoreStartable, Dumpable {
         }
         return style;
     }
+
+    private final ConfigurationListener mConfigurationListener = new ConfigurationListener() {
+        @Override
+        public void onUiModeChanged() {
+            reevaluateSystemTheme(true /* forceReload */);
+        }
+    };
 
     @Override
     public void dump(@NonNull PrintWriter pw, @NonNull String[] args) {
