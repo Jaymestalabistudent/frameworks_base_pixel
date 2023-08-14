@@ -6223,6 +6223,31 @@ public final class Settings {
          */
         public static final String QS_TILE_LABEL_HIDE = "qs_tile_label_hide";
         
+ 
+        /**
+         * @hide
+         */
+        public static final String QS_TILE_VERTICAL_LAYOUT = "qs_tile_vertical_layout";
+
+        /**
+         * @hide
+         */
+        public static final String QS_LAYOUT = "qs_layout";
+
+        /**
+         * @hide
+         */
+        public static final String QQS_LAYOUT = "qqs_layout";
+
+     
+        /**
+         * QS Header image
+         * format = "qs_header_image_" + QS_HEADER_IMAGE
+         * values 0 and -1 are reserved to mark disabled state (0) and custom user image (-1)
+         * @hide
+         */
+        public static final String QS_HEADER_IMAGE = "qs_header_image";
+        
         /**
          * QS header image tint
          * 0 - No tint
@@ -6281,28 +6306,6 @@ public final class Settings {
           * @hide
           **/
         public static final String QS_HEADER_IMAGE_URI = "qs_header_image_uri";
-
-        /**
-         * @hide
-         */
-        public static final String QS_TILE_VERTICAL_LAYOUT = "qs_tile_vertical_layout";
-
-        /**
-         * @hide
-         */
-        public static final String QS_LAYOUT = "qs_layout";
-
-        /**
-         * @hide
-         */
-        public static final String QQS_LAYOUT = "qqs_layout";
-
-     
-        /**
-         * QS Header
-         * @hide
-         */
-        public static final String QS_HEADER_IMAGE = "qs_header_image";
 
         /**
          * These are all public system settings
