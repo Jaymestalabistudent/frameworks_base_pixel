@@ -26,7 +26,6 @@
     android:gravity="center_vertical"
     android:maxWidth="@dimen/toast_width"
     android:background="@drawable/toast_frame_legacy"
-    android:clipChildren="false"
     android:elevation="@dimen/toast_elevation"
     android:layout_marginEnd="16dp"
     android:layout_marginStart="16dp"
