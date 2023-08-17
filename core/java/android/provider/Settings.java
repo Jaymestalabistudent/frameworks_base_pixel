@@ -6211,6 +6211,12 @@ public final class Settings {
         public static final String SMART_5G = "smart_5g";
         
         /**
+         * QS Header
+         * @hide
+         */
+        public static final String QS_HEADER_IMAGE = "qs_header_image";
+       
+        /**
          * @hide
          */
         public static final String QS_TILE_LABEL_HIDE = "qs_tile_label_hide";
