@@ -6279,6 +6279,73 @@ public final class Settings {
         public static final String ON_THE_GO_CAMERA = "on_the_go_camera";
 
         /**
+         * QS Header image
+         * format = "qs_header_image_" + QS_HEADER_IMAGE
+         * values 0 and -1 are reserved to mark disabled state (0) and custom user image (-1)
+         * @hide
+         */
+        public static final String QS_HEADER_IMAGE = "qs_header_image";
+        
+        /**
+         * QS header image tint
+         * 0 - No tint
+         * 1 - Accent
+         * 2 - Color primary
+         * 3 - Color primary inverse
+         * 4 - Custom
+         * @hide
+         */
+        public static final String QS_HEADER_IMAGE_TINT = "qs_header_image_tint";
+
+        /**
+         * QS header image custom tint
+         * @hide
+         **/
+        public static final String QS_HEADER_IMAGE_TINT_CUSTOM = "qs_header_image_tint_custom";
+
+        /**
+         * QS header image alpha
+         * @hide
+         **/
+        public static final String QS_HEADER_IMAGE_ALPHA = "qs_header_image_alpha";
+
+        /**
+         * QS header image portrait height
+         * @hide
+         **/
+        public static final String QS_HEADER_IMAGE_HEIGHT_PORTRAIT = "qs_header_image_height_portrait";
+
+        /**
+         * QS header image landscape height
+         * @hide
+         **/
+        public static final String QS_HEADER_IMAGE_HEIGHT_LANDSCAPE = "qs_header_image_height_landscape";
+
+        /**
+         * Wether to enable QS header image in landscape mode
+         * @hide
+         **/
+        public static final String QS_HEADER_IMAGE_LANDSCAPE_ENABLED = "qs_header_image_landscape_enabled";
+
+        /**
+         * QS header image side padding
+         * @hide
+         **/
+         public static final String QS_HEADER_IMAGE_PADDING_SIDE = "qs_header_image_padding_side";
+
+         /**
+          * QS header image top padding
+          * @hide
+          **/
+        public static final String QS_HEADER_IMAGE_PADDING_TOP = "qs_header_image_padding_top";
+
+        /**
+          * QS header image custom URI
+          * @hide
+          **/
+        public static final String QS_HEADER_IMAGE_URI = "qs_header_image_uri";
+
+        /**
          * These are all public system settings
          *
          * @hide
@@ -6448,6 +6515,16 @@ public final class Settings {
             PRIVATE_SETTINGS.add(ADAPTIVE_PLAYBACK_ENABLED);
             PRIVATE_SETTINGS.add(ADAPTIVE_PLAYBACK_TIMEOUT);
             PRIVATE_SETTINGS.add(SENSOR_BLOCK);
+            PRIVATE_SETTINGS.add(QS_HEADER_IMAGE);
+            PRIVATE_SETTINGS.add(QS_HEADER_IMAGE_TINT);
+            PRIVATE_SETTINGS.add(QS_HEADER_IMAGE_TINT_CUSTOM);
+            PRIVATE_SETTINGS.add(QS_HEADER_IMAGE_ALPHA);
+            PRIVATE_SETTINGS.add(QS_HEADER_IMAGE_HEIGHT_PORTRAIT);
+            PRIVATE_SETTINGS.add(QS_HEADER_IMAGE_HEIGHT_LANDSCAPE);
+            PRIVATE_SETTINGS.add(QS_HEADER_IMAGE_LANDSCAPE_ENABLED);
+            PRIVATE_SETTINGS.add(QS_HEADER_IMAGE_PADDING_SIDE);
+            PRIVATE_SETTINGS.add(QS_HEADER_IMAGE_PADDING_TOP);
+            PRIVATE_SETTINGS.add(QS_HEADER_IMAGE_URI);
         }
         /**
          * These entries are considered common between the personal and the managed profile,

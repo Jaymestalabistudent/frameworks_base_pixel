@@ -14,6 +14,15 @@
      limitations under the License.
 -->
 <resources>
+
+  <!-- Height of the faceunlock image view -->
+    <dimen name="keyguard_face_unlock_margin_bottom">@dimen/keyguard_lock_height</dimen>
+
+    <!-- Screen record dot -->
+    <dimen name="screenrecord_dot_size">48dp</dimen>
+
+    <!-- QS Header height full -->
+    <dimen name="qs_header_height_full">200dp</dimen>
     <!-- Preference activity, vertical padding for the header list -->
     <dimen name="preference_screen_header_vertical_padding_material">0dp</dimen>
 
