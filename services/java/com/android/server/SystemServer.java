@@ -219,6 +219,8 @@ import com.android.server.wm.WindowManagerService;
 
 import dalvik.system.VMRuntime;
 
+import org.rising.server.QuickSwitchService;
+
 import java.io.File;
 import java.io.FileDescriptor;
 import java.io.IOException;
@@ -435,6 +437,9 @@ public final class SystemServer implements Dumpable {
 
     private static final String POCKETLOCK_SERVICE_CLASS =
             "org.rising.server.PocketModeService";
+
+    private static final String QUICKSWITCH_SERVICE_CLASS =
+            "org.rising.server.QuickSwitchService";
 
     private static final String TETHERING_CONNECTOR_CLASS = "android.net.ITetheringConnector";
 
@@ -2827,7 +2832,9 @@ public final class SystemServer implements Dumpable {
         t.traceBegin("StartPocketLockService");
         mSystemServiceManager.startService(POCKETLOCK_SERVICE_CLASS);
         t.traceEnd();
-
+        t.traceBegin("StartQuickSwitchService");
+        mSystemServiceManager.startService(QUICKSWITCH_SERVICE_CLASS);
+        t.traceEnd();
 
         // These are needed to propagate to the runnable below.
         final NetworkManagementService networkManagementF = networkManagement;
