@@ -430,6 +430,10 @@ public final class SystemServer implements Dumpable {
             "com.android.server.adservices.AdServicesManagerService$Lifecycle";
     private static final String QUICKSWITCH_SERVICE_CLASS =
             "org.rising.server.QuickSwitchService";
+
+    private static final String POCKETLOCK_SERVICE_CLASS =
+            "org.rising.server.PocketModeService";
+
     private static final String TETHERING_CONNECTOR_CLASS = "android.net.ITetheringConnector";
 
     private static final String PERSISTENT_DATA_BLOCK_PROP = "ro.frp.pst";
@@ -2807,6 +2811,11 @@ public final class SystemServer implements Dumpable {
         t.traceBegin("StartQuickSwitchService");
         mSystemServiceManager.startService(QUICKSWITCH_SERVICE_CLASS);
         t.traceEnd();
+
+        t.traceBegin("StartPocketLockService");
+        mSystemServiceManager.startService(POCKETLOCK_SERVICE_CLASS);
+        t.traceEnd();
+
 
         // These are needed to propagate to the runnable below.
         final NetworkManagementService networkManagementF = networkManagement;
