@@ -11616,7 +11616,16 @@ public final class Settings {
          */
         public static final String FACE_UNLOCK_METHOD = "face_unlock_method";
 
-        
+         /**
+         * Parameter for Pocket Mode
+         *
+         * The value "1", Enable Pocket Mode
+         * The value "0", Disables Pocket Mode
+         *
+         * @hide
+         */
+        public static final String POCKET_MODE_ENABLED
+                = "pocket_mode_enabled";
    
   /**
          * List of ; separated apps to be hidden from launcher.
