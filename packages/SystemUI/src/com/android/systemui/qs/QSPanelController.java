@@ -112,16 +112,6 @@ public class QSPanelController extends QSPanelControllerBase<QSPanel> {
         updateMediaDisappearParameters();
 
         mTunerService.addTunable(mView, QS_SHOW_BRIGHTNESS);
-
-        mTunerService.addTunable(mView, QSPanel.QS_TILE_ANIMATION_STYLE);
-        mTunerService.addTunable(mView, QSPanel.QS_TILE_ANIMATION_DURATION);
-        mTunerService.addTunable(mView, QSPanel.QS_TILE_ANIMATION_INTERPOLATOR);
-
-        mView.setBrightnessRunnable(() -> {
-            mView.updateResources();
-            updateBrightnessMirror();
-        });
-
         mView.updateResources();
         if (mView.isListening()) {
             refreshAllTiles();

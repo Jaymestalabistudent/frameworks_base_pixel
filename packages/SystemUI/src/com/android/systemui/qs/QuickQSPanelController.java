@@ -90,18 +90,6 @@ public class QuickQSPanelController extends QSPanelControllerBase<QuickQSPanel> 
     @Override
     protected void onViewAttached() {
         super.onViewAttached();
-
-        mTunerService.addTunable(mView, QSPanel.QS_TILE_ANIMATION_STYLE);
-        mTunerService.addTunable(mView, QSPanel.QS_TILE_ANIMATION_DURATION);
-        mTunerService.addTunable(mView, QSPanel.QS_TILE_ANIMATION_INTERPOLATOR);
-
-        mView.setBrightnessRunnable(() -> {
-            mView.updateResources();
-            updateBrightnessMirror();
-        });
-
-        mView.addOnConfigurationChangedListener(mOnConfigurationChangedListener);
-        mBrightnessMirrorHandler.onQsPanelAttached();
     }
 
     @Override

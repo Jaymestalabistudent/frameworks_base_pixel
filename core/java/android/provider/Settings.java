@@ -5761,27 +5761,7 @@ public final class Settings {
          */
         public static final String SMART_PIXELS_ON_POWER_SAVE = "smart_pixels_on_power_save";
         
-        /**
-         * @hide
-         */
-        public static final String QS_TRANSPARENCY = "qs_transparency";
-        /**
-         * Change quick settings tiles animation style
-         * @hide
-         */
-        public static final String QS_TILE_ANIMATION_STYLE = "qs_tile_animation_style";
 
-        /**
-         * Change quick settings tiles animation duration
-         * @hide
-         */
-        public static final String QS_TILE_ANIMATION_DURATION = "qs_tile_animation_duration";
-
-        /**
-         * Change quick settings tiles interpolator
-         * @hide
-         */
-        public static final String QS_TILE_ANIMATION_INTERPOLATOR = "qs_tile_animation_interpolator";
        /**
          * Adaptive playback
          * Automatically pause media when the volume is muted and
