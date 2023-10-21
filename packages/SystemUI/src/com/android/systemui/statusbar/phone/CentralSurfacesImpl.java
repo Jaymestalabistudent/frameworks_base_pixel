@@ -4239,6 +4239,7 @@ public class CentralSurfacesImpl implements CoreStartable, CentralSurfaces, Tune
             default:
                 break;
          }
+      }
     }
 
     // End Extra BaseStatusBarMethods.
