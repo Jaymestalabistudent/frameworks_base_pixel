@@ -420,6 +420,11 @@
                  android:exported="false" />
 
         <service android:name=".screenrecord.RecordingService" />
+   
+        <!-- Smart Pixels -->
+        <service android:name=".smartpixels.SmartPixelsService"
+            android:enabled="true" />
+
 
         <receiver android:name=".SysuiRestartReceiver"
             android:exported="false">
