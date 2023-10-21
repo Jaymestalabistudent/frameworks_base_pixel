@@ -1713,20 +1713,6 @@ public final class ActivityRecord extends WindowToken implements WindowManagerSe
         mAnimatingActivityRegistry = registry;
     }
 
-    void updateAnimatingActivityRegistry() {
-        final Task rootTask = getRootTask();
-        final AnimatingActivityRegistry registry = rootTask != null
-                ? rootTask.getAnimatingActivityRegistry()
-                : null;
-
-        // If we reparent, make sure to remove ourselves from the old animation registry.
-        if (mAnimatingActivityRegistry != null && mAnimatingActivityRegistry != registry) {
-            mAnimatingActivityRegistry.notifyFinished(this);
-        }
-
-        mAnimatingActivityRegistry = registry;
-    }
-
     /**
      * Sets {@link #mLastParentBeforePip} to the current parent Task, it's caller's job to ensure
      * {@link #getTask()} is set before this is called.
