@@ -22,15 +22,10 @@ import static com.android.systemui.qs.dagger.QSFragmentModule.QS_USING_MEDIA_PLA
 
 import androidx.annotation.VisibleForTesting;
 
-import android.os.Handler;
-import android.os.UserHandle;
-import android.provider.Settings;
-
 import com.android.internal.logging.MetricsLogger;
 import com.android.internal.logging.UiEventLogger;
 import com.android.systemui.R;
 import com.android.systemui.dump.DumpManager;
-import com.android.systemui.dagger.qualifiers.Main;
 import com.android.systemui.media.controls.ui.MediaHierarchyManager;
 import com.android.systemui.media.controls.ui.MediaHost;
 import com.android.systemui.plugins.qs.QSTile;
@@ -38,9 +33,6 @@ import com.android.systemui.qs.customize.QSCustomizerController;
 import com.android.systemui.qs.dagger.QSScope;
 import com.android.systemui.qs.logging.QSLogger;
 import com.android.systemui.util.leak.RotationUtils;
-
-import com.android.systemui.tuner.TunerService;
-import com.android.systemui.util.settings.SystemSettings;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -63,13 +55,10 @@ public class QuickQSPanelController extends QSPanelControllerBase<QuickQSPanel> 
             @Named(QS_USING_COLLAPSED_LANDSCAPE_MEDIA)
                     Provider<Boolean> usingCollapsedLandscapeMediaProvider,
             MetricsLogger metricsLogger, UiEventLogger uiEventLogger, QSLogger qsLogger,
-            DumpManager dumpManager,
-            @Main Handler mainHandler,
-            SystemSettings systemSettings,
-            TunerService tunerService
+            DumpManager dumpManager
     ) {
         super(view, qsHost, qsCustomizerController, usingMediaPlayer, mediaHost, metricsLogger,
-                uiEventLogger, qsLogger, dumpManager, mainHandler, systemSettings);
+                uiEventLogger, qsLogger, dumpManager);
         mUsingCollapsedLandscapeMediaProvider = usingCollapsedLandscapeMediaProvider;
     }
 
