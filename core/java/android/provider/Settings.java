@@ -5723,13 +5723,7 @@ public final class Settings {
         public static final String LOCKSCREEN_PIN_SCRAMBLE_LAYOUT =
                 "lockscreen_scramble_pin_layout";
 
-        /**
-         * Whether to scramble a pin unlock layout
-         * 0 = 0ff, 1 = on
-         * @hide
-         */
-        public static final String LOCKSCREEN_PIN_SCRAMBLE_LAYOUT =
-                "lockscreen_scramble_pin_layout";
+    
 
         /**
          * IMPORTANT: If you add a new public settings you also have to add it to
