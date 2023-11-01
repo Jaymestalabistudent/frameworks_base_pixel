@@ -5812,12 +5812,6 @@ public final class Settings {
         public static final String SMART_5G = "smart_5g";
 
         /**
-          * QS header size
-          * @hide
-          */
-        public static final String QS_HEADER_SIZE = "qs_header_size";
-        
-        /**
          * These are all public system settings
          *
          * @hide
@@ -5956,7 +5950,7 @@ public final class Settings {
             PRIVATE_SETTINGS.add(LOCKSCREEN_PIN_SCRAMBLE_LAYOUT);
             PRIVATE_SETTINGS.add(ADAPTIVE_PLAYBACK_ENABLED);
             PRIVATE_SETTINGS.add(ADAPTIVE_PLAYBACK_TIMEOUT);
-            PRIVATE_SETTINGS.add(QS_HEADER_SIZE);
+            PRIVATE_SETTINGS.add(POCKET_JUDGE);
         }
 
         /**
