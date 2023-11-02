@@ -46,7 +46,7 @@
             android:id="@+id/volume_row_slider_frame"
             android:layout_width="match_parent"
             android:layout_height="@dimen/volume_row_slider_height">
-            <SeekBar
+            <com.android.systemui.volume.DotLineSeekBar
                 android:id="@+id/volume_row_slider"
                 android:paddingLeft="0dp"
                 android:paddingRight="0dp"
