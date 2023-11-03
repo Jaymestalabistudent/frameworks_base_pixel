@@ -18,6 +18,8 @@
 */
 -->
 <resources>
+
+    <color name="qs_footer_circle_color">@android:color/system_neutral1_700</color>
     <drawable name="screen_background_light">#ffffffff</drawable>
     <drawable name="screen_background_dark">#ff000000</drawable>
     <drawable name="status_bar_closed_default_background">#ff000000</drawable>
