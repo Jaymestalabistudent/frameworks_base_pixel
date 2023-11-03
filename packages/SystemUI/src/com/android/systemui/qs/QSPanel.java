@@ -112,7 +112,10 @@ public class QSPanel extends LinearLayout implements Tunable {
     private PageIndicator mFooterPageIndicator;
     private int mContentMarginStart;
     private int mContentMarginEnd;
-    private boolean mUsingHorizontalLayout;
+    private int mMaxColumnsPortrait;
+    private int mMaxColumnsLandscape;
+    private int mMaxColumnsMediaPlayer;
+    protected boolean mUsingHorizontalLayout;
 
     @Nullable
     private LinearLayout mHorizontalLinearLayout;
@@ -139,7 +142,10 @@ public class QSPanel extends LinearLayout implements Tunable {
         mMediaTotalBottomMargin = getResources().getDimensionPixelSize(
                 R.dimen.quick_settings_bottom_margin_media);
         mMediaTopMargin = getResources().getDimensionPixelSize(
-                R.dimen.qs_tile_margin_vertical);
+                R.dimen.qs_media_margin_top);
+        mMaxColumnsPortrait = getResources().getInteger(R.integer.qs_panel_num_columns);
+        mMaxColumnsLandscape = getResources().getInteger(R.integer.qs_panel_num_columns_landscape);
+        mMaxColumnsMediaPlayer = getResources().getInteger(R.integer.qs_panel_num_columns_media);
         mContext = context;
 
         setOrientation(VERTICAL);
@@ -195,6 +201,7 @@ public class QSPanel extends LinearLayout implements Tunable {
         mClippingRect.left = 0;
         mClippingRect.top = -1000;
         mHorizontalContentContainer.setClipBounds(mClippingRect);
+        updateColumns();
     }
 
     /**
@@ -400,7 +407,7 @@ public class QSPanel extends LinearLayout implements Tunable {
 
     protected void updatePadding() {
         final Resources res = mContext.getResources();
-        int paddingTop = res.getDimensionPixelSize(R.dimen.qs_panel_padding_top);
+        int paddingTop = res.getDimensionPixelSize(R.dimen.qs_panel_padding_top) + res.getDimensionPixelSize(R.dimen.qs_panel_spacer);
         int paddingBottom = res.getDimensionPixelSize(R.dimen.qs_panel_padding_bottom);
         setPaddingRelative(getPaddingStart(),
                 paddingTop,
@@ -461,13 +468,23 @@ public class QSPanel extends LinearLayout implements Tunable {
     private void switchAllContentToParent(ViewGroup parent, QSTileLayout newLayout) {
         int index = parent == this ? mMovableContentStartIndex : 0;
 
-        // Let's first move the tileLayout to the new parent, since that should come first.
-        switchToParent((View) newLayout, parent, index);
-        index++;
+        if (mBrightnessView != null && mTop) {
+            switchToParent(mBrightnessView, parent, index);
+            index++;
+        }
 
         if (mFooter != null) {
             // Then the footer with the settings
             switchToParent(mFooter, parent, index);
+            index++;
+        }
+
+        // Let's first move the tileLayout to the new parent, since that should come first.
+        switchToParent((View) newLayout, parent, index);
+        index++;
+
+        if (mBrightnessView != null && !mTop) {
+            switchToParent(mBrightnessView, parent, index);
             index++;
         }
     }
@@ -631,6 +648,18 @@ public class QSPanel extends LinearLayout implements Tunable {
         }
     }
 
+    public void updateColumns() {
+        boolean isLandscape = getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE;
+
+        int mColumnsMediaPlayer = mUsingHorizontalLayout ?
+            mMaxColumnsMediaPlayer :
+            mMaxColumnsLandscape;
+
+        mTileLayout.setMaxColumns(isLandscape ?
+            mColumnsMediaPlayer :
+            mMaxColumnsPortrait);
+    }
+
     void setUsingHorizontalLayout(boolean horizontal, ViewGroup mediaHostView, boolean force) {
         if (horizontal != mUsingHorizontalLayout || force) {
             Log.d(getDumpableTag(), "setUsingHorizontalLayout: " + horizontal + ", " + force);
@@ -639,8 +668,7 @@ public class QSPanel extends LinearLayout implements Tunable {
             switchAllContentToParent(newParent, mTileLayout);
             reAttachMediaHost(mediaHostView, horizontal);
             if (needsDynamicRowsAndColumns()) {
-                mTileLayout.setMinRows(horizontal ? 2 : 1);
-                mTileLayout.setMaxColumns(horizontal ? 2 : 6);
+                updateColumns();
             }
             updateMargins(mediaHostView);
             mHorizontalLinearLayout.setVisibility(horizontal ? View.VISIBLE : View.GONE);
