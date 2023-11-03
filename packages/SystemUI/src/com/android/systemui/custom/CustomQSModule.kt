@@ -11,7 +11,6 @@ import com.android.systemui.qs.tiles.AmbientDisplayTile
 import com.android.systemui.qs.tiles.UsbTetherTile
 import com.android.systemui.qs.tiles.AODTile
 import com.android.systemui.qs.tiles.VpnTile
-import com.android.systemui.qs.tiles.CPUInfoTile
 
 import dagger.Binds
 import dagger.Module
@@ -37,12 +36,6 @@ interface CustomQSModule {
     @IntoMap
     @StringKey(WifiTile.TILE_SPEC)
     fun bindWifiTile(wifiTile: WifiTile): QSTileImpl<*>
-   
-    /** Inject CPUInfoTile into tileMap in QSModule */
-    @Binds
-    @IntoMap
-    @StringKey(CPUInfoTile.TILE_SPEC)
-    fun bindCPUInfoTile(cpuInfoTile: CPUInfoTile): QSTileImpl<*>
 
     /** Inject CaffeineTile into tileMap in QSModule */
     @Binds
