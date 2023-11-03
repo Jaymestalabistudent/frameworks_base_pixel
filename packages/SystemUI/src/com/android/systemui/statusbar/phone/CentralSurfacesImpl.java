@@ -63,6 +63,7 @@ import android.app.WallpaperManager;
 import android.app.admin.DevicePolicyManager;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -70,6 +71,7 @@ import android.content.om.IOverlayManager;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.content.res.Configuration;
+import android.database.ContentObserver;
 import android.graphics.Point;
 import android.hardware.devicestate.DeviceStateManager;
 import android.hardware.fingerprint.FingerprintManager;
@@ -611,6 +613,7 @@ public class CentralSurfacesImpl implements CoreStartable, CentralSurfaces, Tune
         }
     }
 
+    private Handler mMainHandler;
     private final DelayableExecutor mMainExecutor;
 
     private int mInteractingWindows;
@@ -770,6 +773,7 @@ public class CentralSurfacesImpl implements CoreStartable, CentralSurfaces, Tune
             LockscreenShadeTransitionController lockscreenShadeTransitionController,
             FeatureFlags featureFlags,
             KeyguardUnlockAnimationController keyguardUnlockAnimationController,
+            @Main Handler mainHandler,
             @Main DelayableExecutor delayableExecutor,
             @Main MessageRouter messageRouter,
             WallpaperManager wallpaperManager,
@@ -858,6 +862,7 @@ public class CentralSurfacesImpl implements CoreStartable, CentralSurfaces, Tune
         mStatusBarHideIconsForBouncerManager = statusBarHideIconsForBouncerManager;
         mFeatureFlags = featureFlags;
         mKeyguardUnlockAnimationController = keyguardUnlockAnimationController;
+        mMainHandler = mainHandler;
         mMainExecutor = delayableExecutor;
         mMessageRouter = messageRouter;
         mWallpaperManager = wallpaperManager;
@@ -977,6 +982,9 @@ public class CentralSurfacesImpl implements CoreStartable, CentralSurfaces, Tune
         } else if (DEBUG) {
             Log.v(TAG, "start(): no wallpaper service ");
         }
+
+        mSbSettingsObserver.observe();
+        mSbSettingsObserver.update();
 
         // Set up the initial notification state. This needs to happen before CommandQueue.disable()
         setUpPresenter();
@@ -3967,6 +3975,57 @@ public class CentralSurfacesImpl implements CoreStartable, CentralSurfaces, Tune
     @Override
     public boolean isDeviceInteractive() {
         return mDeviceInteractive;
+    }
+
+    private SbSettingsObserver mSbSettingsObserver = new SbSettingsObserver(mMainHandler);
+    private class SbSettingsObserver extends ContentObserver {
+        SbSettingsObserver(Handler handler) {
+            super(handler);
+        }
+
+        void observe() {
+            ContentResolver resolver = mContext.getContentResolver();
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.DOUBLE_TAP_SLEEP_LOCKSCREEN),
+                    false, this, UserHandle.USER_ALL);
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.DOUBLE_TAP_SLEEP_GESTURE),
+                    false, this, UserHandle.USER_ALL);
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.LOCKSCREEN_MEDIA_BLUR),
+                    false, this, UserHandle.USER_ALL);
+        }
+
+        @Override
+        public void onChange(boolean selfChange, Uri uri) {
+            super.onChange(selfChange, uri);
+            if (uri.equals(Settings.System.getUriFor(
+                    Settings.System.DOUBLE_TAP_SLEEP_LOCKSCREEN))
+                    || uri.equals(Settings.System.getUriFor(
+                    Settings.System.DOUBLE_TAP_SLEEP_GESTURE))) {
+                setDoubleTapToSleepGesture();
+            } else if (uri.equals(Settings.System.getUriFor(
+                    Settings.System.LOCKSCREEN_MEDIA_BLUR))) {
+                setLockScreenMediaBlurLevel();
+            }
+        }
+
+        public void update() {
+            setDoubleTapToSleepGesture();
+            setLockScreenMediaBlurLevel();
+        }
+    }
+
+    private void setDoubleTapToSleepGesture() {
+        if (mNotificationShadeWindowViewController != null) {
+            mNotificationShadeWindowViewController.setDoubleTapToSleepGesture();
+        }
+    }
+
+    private void setLockScreenMediaBlurLevel() {
+        if (mMediaManager != null) {
+            mMediaManager.setLockScreenMediaBlurLevel();
+        }
     }
 
     private final BroadcastReceiver mBannerActionBroadcastReceiver = new BroadcastReceiver() {
