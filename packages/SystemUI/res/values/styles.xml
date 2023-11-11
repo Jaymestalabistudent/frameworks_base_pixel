@@ -477,7 +477,10 @@
         <item name="lightIconTheme">@style/DualToneLightTheme</item>
         <item name="darkIconTheme">@style/QSHeaderDarkTheme</item>
     </style>
-
+   <style name="QSHeaderTheme" parent="@style/Theme.SystemUI">
+        <item name="lightIconTheme">@style/DualToneLightTheme</item>
+        <item name="darkIconTheme">@style/QSHeaderDarkTheme</item>
+    </style>
     <style name="QSIconTheme">
         <item name="backgroundColor">?android:attr/textColorHint</item>
         <item name="fillColor">?android:attr/textColorPrimary</item>
