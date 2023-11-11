@@ -300,7 +300,6 @@ public class MobileSignalController extends SignalController<MobileState, Mobile
         CharSequence qsDescription = null;
 
         if (mCurrentState.dataSim) {
-            // If using provider model behavior, only show QS icons if the state is also default
             if (mCurrentState.showQuickSettingsRatIcon() || mConfig.alwaysShowDataRatIcon) {
                 qsTypeIcon = dataTypeIcon;
             }
@@ -322,28 +321,11 @@ public class MobileSignalController extends SignalController<MobileState, Mobile
                 mCurrentState.enabled && !mCurrentState.airplaneMode,
                 getCurrentIconId(), contentDescription);
 
-        if (mProviderModelBehavior) {
-            boolean showDataIconStatusBar = (mCurrentState.dataConnected || dataDisabled)
-                    && mCurrentState.dataSim;
-            typeIcon =
-                    (showDataIconStatusBar || mConfig.alwaysShowDataRatIcon) ? dataTypeIcon : 0;
-            showDataIconStatusBar |= mCurrentState.roaming;
-            statusIcon = new IconState(
-                    showDataIconStatusBar && !mCurrentState.airplaneMode,
-                    getCurrentIconId(), contentDescription);
-
-            showTriangle = showDataIconStatusBar && !mCurrentState.airplaneMode;
-        } else {
-            statusIcon = new IconState(
-                    mCurrentState.enabled && !mCurrentState.airplaneMode,
-                    getCurrentIconId(), contentDescription);
-
-            boolean showDataIconInStatusBar =
-                    (mCurrentState.dataConnected && mCurrentState.isDefault) || dataDisabled;
-            typeIcon =
-                    (showDataIconInStatusBar || mConfig.alwaysShowDataRatIcon) ? dataTypeIcon : 0;
-            showTriangle = mCurrentState.enabled && !mCurrentState.airplaneMode;
-        }
+        boolean showDataIconInStatusBar =
+                (mCurrentState.dataConnected && mCurrentState.isDefault) || dataDisabled;
+        int typeIcon =
+                (showDataIconInStatusBar || mConfig.alwaysShowDataRatIcon) ? dataTypeIcon : 0;
+        boolean showTriangle = mCurrentState.enabled && !mCurrentState.airplaneMode;
 
         return new SbInfo(showTriangle, typeIcon, statusIcon);
     }
