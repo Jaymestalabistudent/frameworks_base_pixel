@@ -568,8 +568,8 @@
     <!-- The size of the gesture span needed to activate the "pull" notification expansion -->
     <dimen name="pull_span_min">25dp</dimen>
 
-    <dimen name="qs_corner_radius">26dp</dimen>
-    <dimen name="qs_tile_height">76dp</dimen>
+    <dimen name="qs_corner_radius">28dp</dimen>
+    <dimen name="qs_tile_height">80dp</dimen>
     <dimen name="qs_tile_margin_horizontal">8dp</dimen>
     <dimen name="qs_tile_margin_vertical">@dimen/qs_tile_margin_horizontal</dimen>
     <dimen name="qs_tile_margin_top_bottom">4dp</dimen>
@@ -613,15 +613,15 @@
     <dimen name="qs_dual_tile_padding_horizontal">6dp</dimen>
     <dimen name="qs_panel_elevation">4dp</dimen>
     <dimen name="qs_panel_padding_bottom">@dimen/footer_actions_height</dimen>
-    <dimen name="qs_panel_padding_top">78dp</dimen>
+    <dimen name="qs_panel_padding_top">80dp</dimen>
 
-    <dimen name="qs_data_usage_text_size">11sp</dimen>
+    <dimen name="qs_data_usage_text_size">14sp</dimen>
     <dimen name="qs_data_usage_usage_text_size">36sp</dimen>
 
     <dimen name="qs_header_mobile_icon_size">@dimen/status_bar_icon_drawing_size</dimen>
     <dimen name="qs_header_carrier_separator_width">6dp</dimen>
     <dimen name="qs_carrier_margin_width">4dp</dimen>
-    <dimen name="qs_footer_icon_size">22dp</dimen>
+    <dimen name="qs_footer_icon_size">20dp</dimen>
     <dimen name="qs_header_row_min_height">48dp</dimen>
 
     <dimen name="qs_header_non_clickable_element_height">24dp</dimen>
