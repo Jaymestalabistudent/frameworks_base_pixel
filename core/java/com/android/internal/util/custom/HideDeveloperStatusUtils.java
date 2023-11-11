@@ -32,21 +32,22 @@ public class HideDeveloperStatusUtils {
         return mApps;
     }
 
-    public void addApp(Context mContext, String packageName, int userId) {
+    public void addApp(Context mContext, String packageName) {
         mApps.add(packageName);
-        Settings.Secure.putStringForUser(mContext.getContentResolver(),
-                Settings.Secure.HIDE_DEVELOPER_STATUS, String.join(",", mApps), userId);
+        Settings.Secure.putString(mContext.getContentResolver(),
+                Settings.Secure.HIDE_DEVELOPER_STATUS, String.join(",", mApps));
     }
 
-    public void removeApp(Context mContext, String packageName, int userId) {
+    public void removeApp(Context mContext, String packageName) {
         mApps.remove(packageName);
-        Settings.Secure.putStringForUser(mContext.getContentResolver(),
-                Settings.Secure.HIDE_DEVELOPER_STATUS, String.join(",", mApps), userId);
+        Settings.Secure.putString(mContext.getContentResolver(),
+                Settings.Secure.HIDE_DEVELOPER_STATUS, String.join(",", mApps));
     }
 
-    public void setApps(Context mContext, int userId) {
+    public void setApps(Context mContext) {
         String apps = Settings.Secure.getStringForUser(mContext.getContentResolver(),
-                Settings.Secure.HIDE_DEVELOPER_STATUS, userId);
+                Settings.Secure.HIDE_DEVELOPER_STATUS,
+                UserHandle.USER_SYSTEM);
         if (apps != null) {
             mApps = new HashSet<>(Arrays.asList(apps.split(",")));
         } else {
