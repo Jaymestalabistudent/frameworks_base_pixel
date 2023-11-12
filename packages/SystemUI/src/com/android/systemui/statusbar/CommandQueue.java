@@ -169,7 +169,6 @@ public class CommandQueue extends IStatusBar.Stub implements
     private static final int MSG_GO_TO_FULLSCREEN_FROM_SPLIT = 70 << MSG_SHIFT;
     private static final int MSG_ENTER_STAGE_SPLIT_FROM_RUNNING_APP = 71 << MSG_SHIFT;
     private static final int MSG_SHOW_MEDIA_OUTPUT_SWITCHER = 72 << MSG_SHIFT;
-    private static final int MSG_CUSTOM_GESTURE = 61 << MSG_SHIFT;
 
     public static final int FLAG_EXCLUDE_NONE = 0;
     public static final int FLAG_EXCLUDE_SEARCH_PANEL = 1 << 0;
@@ -500,7 +499,6 @@ public class CommandQueue extends IStatusBar.Stub implements
          * @see IStatusBar#showMediaOutputSwitcher
          */
         default void showMediaOutputSwitcher(String packageName) {}
-        default void onCustomGestureAction(String action) { }
     }
 
     @VisibleForTesting
@@ -1345,13 +1343,6 @@ public class CommandQueue extends IStatusBar.Stub implements
         mHandler.obtainMessage(MSG_GO_TO_FULLSCREEN_FROM_SPLIT).sendToTarget();
     }
 
-    public void onCustomGestureAction(String action) {
-        synchronized (mLock) {
-            mHandler.removeMessages(MSG_CUSTOM_GESTURE);
-            mHandler.obtainMessage(MSG_CUSTOM_GESTURE, action).sendToTarget();
-        }
-    }
-
     private final class H extends Handler {
         private H(Looper l) {
             super(l);
@@ -1808,9 +1799,6 @@ public class CommandQueue extends IStatusBar.Stub implements
                     String clientPackageName = (String) args.arg1;
                     for (int i = 0; i < mCallbacks.size(); i++) {
                         mCallbacks.get(i).showMediaOutputSwitcher(clientPackageName);
-                case MSG_CUSTOM_GESTURE:
-                    for (int i = 0; i < mCallbacks.size(); i++) {
-                        mCallbacks.get(i).onCustomGestureAction((String) msg.obj);
                     }
                     break;
             }

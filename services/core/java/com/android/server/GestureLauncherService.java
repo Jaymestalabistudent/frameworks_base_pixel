@@ -68,13 +68,11 @@ public class GestureLauncherService extends SystemService {
     private static final boolean DBG_CAMERA_LIFT = false;
     private static final String TAG = "GestureLauncherService";
 
-    private static final String CUSTOM_GESTURE_ACTION_NONE = "none";
-
     /**
      * Time in milliseconds in which the power button must be pressed twice so it will be considered
-     * as a double tap action.
+     * as a camera launch.
      */
-    private static final long POWER_DOUBLE_TAP_MAX_TIME_MS = 300;
+    @VisibleForTesting static final long CAMERA_POWER_DOUBLE_TAP_MAX_TIME_MS = 300;
 
     /**
      * Min time in milliseconds to complete the emergency gesture for it count. If the gesture is
@@ -113,7 +111,7 @@ public class GestureLauncherService extends SystemService {
     /**
      * Number of taps required to launch camera shortcut.
      */
-    private static final int POWER_DOUBLE_TAP_COUNT_THRESHOLD = 2;
+    private static final int CAMERA_POWER_TAP_COUNT_THRESHOLD = 2;
 
     /** Action for starting emergency alerts on Wear OS. */
     private static final String WEAR_LAUNCH_EMERGENCY_ACTION =
@@ -177,9 +175,9 @@ public class GestureLauncherService extends SystemService {
     private int mCameraLaunchLastEventExtra = 0;
 
     /**
-     * Current action for power key double tap;
+     * Whether camera double tap power button gesture is currently enabled;
      */
-    private String mPowerDoubleTapAction;
+    private boolean mCameraDoubleTapPowerEnabled;
 
     /**
      * Whether emergency gesture is currently enabled
@@ -260,9 +258,9 @@ public class GestureLauncherService extends SystemService {
             mWakeLock = mPowerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,
                     "GestureLauncherService");
             updateCameraRegistered();
+            updateCameraDoubleTapPowerEnabled();
             updateEmergencyGestureEnabled();
             updateEmergencyGesturePowerButtonCooldownPeriodMs();
-            updatePowerDoubleTapAction();
 
             mUserId = ActivityManager.getCurrentUser();
             mContext.registerReceiver(mUserReceiver, new IntentFilter(Intent.ACTION_USER_SWITCHED));
@@ -285,6 +283,9 @@ public class GestureLauncherService extends SystemService {
                 Settings.Secure.getUriFor(Settings.Secure.CAMERA_GESTURE_DISABLED),
                 false, mSettingObserver, mUserId);
         mContext.getContentResolver().registerContentObserver(
+                Settings.Secure.getUriFor(Settings.Secure.CAMERA_DOUBLE_TAP_POWER_GESTURE_DISABLED),
+                false, mSettingObserver, mUserId);
+        mContext.getContentResolver().registerContentObserver(
                 Settings.Secure.getUriFor(Settings.Secure.CAMERA_LIFT_TRIGGER_ENABLED),
                 false, mSettingObserver, mUserId);
         mContext.getContentResolver().registerContentObserver(
@@ -293,7 +294,6 @@ public class GestureLauncherService extends SystemService {
         mContext.getContentResolver().registerContentObserver(
                 Settings.Global.getUriFor(
                         Settings.Global.EMERGENCY_GESTURE_POWER_BUTTON_COOLDOWN_PERIOD_MS),
-                Settings.Secure.getUriFor(Settings.Secure.POWER_DOUBLE_TAP_ACTION),
                 false, mSettingObserver, mUserId);
     }
 
@@ -312,11 +312,11 @@ public class GestureLauncherService extends SystemService {
         }
     }
 
-    private void updatePowerDoubleTapAction() {
-        String action = Settings.Secure.getStringForUser(mContext.getContentResolver(),
-                            Settings.Secure.POWER_DOUBLE_TAP_ACTION, mUserId);
+    @VisibleForTesting
+    void updateCameraDoubleTapPowerEnabled() {
+        boolean enabled = isCameraDoubleTapPowerSettingEnabled(mContext, mUserId);
         synchronized (this) {
-            mPowerDoubleTapAction = action;
+            mCameraDoubleTapPowerEnabled = enabled;
         }
     }
 
@@ -447,6 +447,12 @@ public class GestureLauncherService extends SystemService {
                         Settings.Secure.CAMERA_GESTURE_DISABLED, 0, userId) == 0);
     }
 
+    public static boolean isCameraDoubleTapPowerSettingEnabled(Context context, int userId) {
+        return isCameraDoubleTapPowerEnabled(context.getResources())
+                && (Settings.Secure.getIntForUser(context.getContentResolver(),
+                        Settings.Secure.CAMERA_DOUBLE_TAP_POWER_GESTURE_DISABLED, 0, userId) == 0);
+    }
+
     public static boolean isCameraLiftTriggerSettingEnabled(Context context, int userId) {
         return isCameraLiftTriggerEnabled(context.getResources())
                 && (Settings.Secure.getIntForUser(context.getContentResolver(),
@@ -517,22 +523,6 @@ public class GestureLauncherService extends SystemService {
                 || isEmergencyGestureEnabled(resources);
     }
 
-    private boolean handlePowerDoubleTapGesture() {
-        if (!isUserSetupComplete())
-            return false;
-
-        StatusBarManagerInternal service = LocalServices.getService(
-                StatusBarManagerInternal.class);
-        service.onCustomGestureAction(
-            mPowerDoubleTapAction == null ? "camera" : mPowerDoubleTapAction);
-
-        return true;
-    }
-
-    private boolean isPowerDoubleTapEnabled() {
-        return !CUSTOM_GESTURE_ACTION_NONE.equals(mPowerDoubleTapAction);
-    }
-
     /**
      * Attempts to intercept power key down event by detecting certain gesture patterns
      *
@@ -562,7 +552,7 @@ public class GestureLauncherService extends SystemService {
             outLaunched.value = false;
             return false;
         }
-        boolean doubleTapAction = false;
+        boolean launchCamera = false;
         boolean launchEmergencyGesture = false;
         boolean intercept = false;
         long powerTapInterval;
@@ -574,7 +564,7 @@ public class GestureLauncherService extends SystemService {
                 mFirstPowerDown  = event.getEventTime();
                 mPowerButtonConsecutiveTaps = 1;
                 mPowerButtonSlowConsecutiveTaps = 1;
-            } else if (powerTapInterval >= POWER_DOUBLE_TAP_MAX_TIME_MS) {
+            } else if (powerTapInterval >= CAMERA_POWER_DOUBLE_TAP_MAX_TIME_MS) {
                 // Tap too slow for shortcuts
                 mFirstPowerDown  = event.getEventTime();
                 mPowerButtonConsecutiveTaps = 1;
@@ -617,10 +607,10 @@ public class GestureLauncherService extends SystemService {
                     }
                 }
             }
-            if (isPowerDoubleTapEnabled()
-                    && powerTapInterval < POWER_DOUBLE_TAP_MAX_TIME_MS
-                    && mPowerButtonConsecutiveTaps == POWER_DOUBLE_TAP_COUNT_THRESHOLD) {
-                doubleTapAction = true;
+            if (mCameraDoubleTapPowerEnabled
+                    && powerTapInterval < CAMERA_POWER_DOUBLE_TAP_MAX_TIME_MS
+                    && mPowerButtonConsecutiveTaps == CAMERA_POWER_TAP_COUNT_THRESHOLD) {
+                launchCamera = true;
                 intercept = interactive;
             }
         }
@@ -630,8 +620,16 @@ public class GestureLauncherService extends SystemService {
                     + Long.valueOf(mPowerButtonSlowConsecutiveTaps)
                     + " consecutive slow power button taps detected");
         }
-        if (doubleTapAction) {
-            doubleTapAction = handlePowerDoubleTapGesture();
+        if (launchCamera) {
+            Slog.i(TAG, "Power button double tap gesture detected, launching camera. Interval="
+                    + powerTapInterval + "ms");
+            launchCamera = handleCameraGesture(false /* useWakelock */,
+                    StatusBarManager.CAMERA_LAUNCH_SOURCE_POWER_DOUBLE_TAP);
+            if (launchCamera) {
+                mMetricsLogger.action(MetricsEvent.ACTION_DOUBLE_TAP_POWER_CAMERA_GESTURE,
+                        (int) powerTapInterval);
+                mUiEventLogger.log(GestureLauncherEvent.GESTURE_CAMERA_DOUBLE_TAP_POWER);
+            }
         } else if (launchEmergencyGesture) {
             Slog.i(TAG, "Emergency gesture detected, launching.");
             launchEmergencyGesture = handleEmergencyGesture();
@@ -647,7 +645,7 @@ public class GestureLauncherService extends SystemService {
                 mPowerButtonSlowConsecutiveTaps);
         mMetricsLogger.histogram("power_double_tap_interval", (int) powerTapInterval);
 
-        outLaunched.value = doubleTapAction || launchEmergencyGesture;
+        outLaunched.value = launchCamera || launchEmergencyGesture;
         // Intercept power key event if the press is part of a gesture (camera, eGesture) and the
         // user has completed setup.
         return intercept && isUserSetupComplete();
@@ -768,9 +766,9 @@ public class GestureLauncherService extends SystemService {
                 mContext.getContentResolver().unregisterContentObserver(mSettingObserver);
                 registerContentObservers();
                 updateCameraRegistered();
+                updateCameraDoubleTapPowerEnabled();
                 updateEmergencyGestureEnabled();
                 updateEmergencyGesturePowerButtonCooldownPeriodMs();
-                updatePowerDoubleTapAction();
             }
         }
     };
@@ -779,9 +777,9 @@ public class GestureLauncherService extends SystemService {
         public void onChange(boolean selfChange, android.net.Uri uri, int userId) {
             if (userId == mUserId) {
                 updateCameraRegistered();
+                updateCameraDoubleTapPowerEnabled();
                 updateEmergencyGestureEnabled();
                 updateEmergencyGesturePowerButtonCooldownPeriodMs();
-                updatePowerDoubleTapAction();
             }
         }
     };

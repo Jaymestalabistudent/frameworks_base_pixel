@@ -966,8 +966,4 @@ interface IWindowManager
      * Notifies DisplayPolicy that overlays changed.
      */
     void onOverlayChanged();
-     * Triggers system level screenshot action.
-     * This is the same behavior that power + vol down normally does.
-     */
-    void requestSystemScreenshot();
 }

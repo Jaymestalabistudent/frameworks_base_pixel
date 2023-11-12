@@ -293,6 +293,11 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     static final int VERY_LONG_PRESS_POWER_NOTHING = 0;
     static final int VERY_LONG_PRESS_POWER_GLOBAL_ACTIONS = 1;
 
+    // must match: config_keyChordPowerVolumeUp in config.xml
+    static final int POWER_VOLUME_UP_BEHAVIOR_NOTHING = 0;
+    static final int POWER_VOLUME_UP_BEHAVIOR_MUTE = 1;
+    static final int POWER_VOLUME_UP_BEHAVIOR_GLOBAL_ACTIONS = 2;
+
     // must match: config_doublePressOnPowerBehavior in config.xml
     static final int MULTI_PRESS_POWER_NOTHING = 0;
     static final int MULTI_PRESS_POWER_THEATER_MODE = 1;
@@ -361,8 +366,6 @@ public class PhoneWindowManager implements WindowManagerPolicy {
 
     private static final String ACTION_TORCH_OFF =
             "com.android.server.policy.PhoneWindowManager.ACTION_TORCH_OFF";
-
-    private static final String CUSTOM_GESTURE_ACTION_NONE = "none";
 
     /**
      * Keyguard stuff
@@ -660,6 +663,9 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     // Increase the chord delay when taking a screenshot from the keyguard
     private static final float KEYGUARD_SCREENSHOT_CHORD_DELAY_MULTIPLIER = 2.5f;
 
+    // Ringer toggle should reuse timing and triggering from screenshot power and a11y vol up
+    int mRingerToggleChord = VOLUME_HUSH_OFF;
+
     private static final long BUGREPORT_TV_GESTURE_TIMEOUT_MILLIS = 1000;
 
     /* The number of steps between min and max brightness */
@@ -719,6 +725,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     private static final int MSG_SYSTEM_KEY_PRESS = 21;
     private static final int MSG_HANDLE_ALL_APPS = 22;
     private static final int MSG_LAUNCH_ASSIST = 23;
+    private static final int MSG_RINGER_TOGGLE_CHORD = 24;
 
     // Custom additions
     private static final int MSG_CAMERA_LONG_PRESS = 101;
@@ -733,24 +740,6 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     private boolean mTorchEnabled;
     private int mTorchTimeout;
     private PendingIntent mTorchOffPendingIntent;
-    private SwipeToScreenshotListener mSwipeToScreenshot;
-    private String mPowerVolDownAction;
-    private int mKeyCombinationWakeup;
-    private String mPowerVolUpAction;
-    private String mVolUpDownAction;
-
-    private final Runnable mPowerVolDownRunnable = () -> {
-        getStatusBarManagerInternal().onCustomGestureAction(
-            mPowerVolDownAction == null ? "screenshot" : mPowerVolDownAction);
-    };
-
-    private final Runnable mPowerVolUpRunnable = () -> {
-        getStatusBarManagerInternal().onCustomGestureAction(mPowerVolUpAction);
-    };
-
-    private final Runnable mVolUpDownRunnable = () -> {
-        getStatusBarManagerInternal().onCustomGestureAction(mVolUpDownAction);
-    };
 
     private class PolicyHandler extends Handler {
         @Override
@@ -884,6 +873,9 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                     Settings.Global.POWER_BUTTON_VERY_LONG_PRESS), false, this,
                     UserHandle.USER_ALL);
             resolver.registerContentObserver(Settings.Global.getUriFor(
+                    Settings.Global.KEY_CHORD_POWER_VOLUME_UP), false, this,
+                    UserHandle.USER_ALL);
+            resolver.registerContentObserver(Settings.Global.getUriFor(
                     Settings.Global.POWER_BUTTON_SUPPRESSION_DELAY_AFTER_GESTURE_WAKE), false, this,
                     UserHandle.USER_ALL);
             resolver.registerContentObserver(Settings.System.getUriFor(
@@ -962,18 +954,6 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                     UserHandle.USER_ALL);
             resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.SWIPE_TO_SCREENSHOT), false, this,
-                    UserHandle.USER_ALL);
-            resolver.registerContentObserver(Settings.Secure.getUriFor(
-                    Settings.Secure.POWER_VOL_DOWN_ACTION), false, this,
-                    UserHandle.USER_ALL);
-            resolver.registerContentObserver(Settings.Secure.getUriFor(
-                    Settings.Secure.KEY_COMBINATION_WAKEUP), false, this,
-                    UserHandle.USER_ALL);
-            resolver.registerContentObserver(Settings.Secure.getUriFor(
-                    Settings.Secure.POWER_VOL_UP_ACTION), false, this,
-                    UserHandle.USER_ALL);
-            resolver.registerContentObserver(Settings.Secure.getUriFor(
-                    Settings.Secure.VOL_UP_DOWN_ACTION), false, this,
                     UserHandle.USER_ALL);
 
             updateSettings();
@@ -1764,6 +1744,12 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                 getAccessibilityShortcutTimeout());
     }
 
+    private void interceptRingerToggleChord() {
+        mHandler.removeMessages(MSG_RINGER_TOGGLE_CHORD);
+        mHandler.sendMessageDelayed(mHandler.obtainMessage(MSG_RINGER_TOGGLE_CHORD),
+                getRingerToggleChordDelay());
+    }
+
     private long getAccessibilityShortcutTimeout() {
         final ViewConfiguration config = ViewConfiguration.get(mContext);
         final boolean hasDialogShown = Settings.Secure.getIntForUser(mContext.getContentResolver(),
@@ -1809,6 +1795,10 @@ public class PhoneWindowManager implements WindowManagerPolicy {
 
     private void cancelPendingAccessibilityShortcutAction() {
         mHandler.removeMessages(MSG_ACCESSIBILITY_SHORTCUT);
+    }
+
+    private void cancelPendingRingerToggleChordAction() {
+        mHandler.removeMessages(MSG_RINGER_TOGGLE_CHORD);
     }
 
     private final Runnable mEndCallLongPress = new Runnable() {
@@ -2574,49 +2564,21 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                         }
                     });
         }
-        mKeyCombinationManager = new KeyCombinationManager();
-
-        mKeyCombinationManager.addRule(
-                new TwoKeysCombinationRule(KEYCODE_VOLUME_DOWN, KEYCODE_POWER) {
-                    @Override
-                    boolean preCondition() {
-                        return !CUSTOM_GESTURE_ACTION_NONE.equals(mPowerVolDownAction);
-                    }
-                    @Override
-                    void execute() {
-                        mPowerKeyHandled = true;
-                        wakeUpFromPowerKey(SystemClock.uptimeMillis());
-                        mHandler.postDelayed(mPowerVolDownRunnable, 100);
-                    }
-                    @Override
-                    void cancel() {}
-                });
 
         mKeyCombinationManager.addRule(
                 new TwoKeysCombinationRule(KEYCODE_VOLUME_DOWN, KEYCODE_VOLUME_UP) {
                     @Override
                     boolean preCondition() {
-                        return mVolUpDownAction != null
-                                && !CUSTOM_GESTURE_ACTION_NONE.equals(mVolUpDownAction)
-                                || mAccessibilityShortcutController
-                                    .isAccessibilityShortcutAvailable(isKeyguardLocked());
+                        return mAccessibilityShortcutController
+                                .isAccessibilityShortcutAvailable(isKeyguardLocked());
                     }
                     @Override
                     void execute() {
-                        if (mVolUpDownAction != null
-                                && !CUSTOM_GESTURE_ACTION_NONE.equals(mVolUpDownAction)) {
-                            wakeUpFromPowerKey(SystemClock.uptimeMillis());
-                            mHandler.postDelayed(mVolUpDownRunnable, 100);
-                        } else {
-                            interceptAccessibilityShortcutChord();
-                        }
+                        interceptAccessibilityShortcutChord();
                     }
                     @Override
                     void cancel() {
-                        if (mVolUpDownAction == null
-                                || CUSTOM_GESTURE_ACTION_NONE.equals(mVolUpDownAction)) {
-                            cancelPendingAccessibilityShortcutAction();
-                        }
+                        cancelPendingAccessibilityShortcutAction();
                     }
                 });
 
@@ -2627,8 +2589,12 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                 new TwoKeysCombinationRule(KEYCODE_VOLUME_UP, KEYCODE_POWER) {
                     @Override
                     boolean preCondition() {
-                        return mPowerVolUpAction != null
-                                && !CUSTOM_GESTURE_ACTION_NONE.equals(mPowerVolUpAction);
+                        switch (mPowerVolUpBehavior) {
+                            case POWER_VOLUME_UP_BEHAVIOR_MUTE:
+                                return mRingerToggleChord != VOLUME_HUSH_OFF;
+                            default:
+                                return true;
+                        }
                     }
                     @Override
                     void execute() {
@@ -2648,12 +2614,18 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                             default:
                                 break;
                         }
-                        mPowerKeyHandled = true;
-                        wakeUpFromPowerKey(SystemClock.uptimeMillis());
-                        mHandler.postDelayed(mPowerVolUpRunnable, 100);
                     }
                     @Override
-                    void cancel() {}
+                    void cancel() {
+                        switch (mPowerVolUpBehavior) {
+                            case POWER_VOLUME_UP_BEHAVIOR_MUTE:
+                                cancelPendingRingerToggleChordAction();
+                                break;
+                            case POWER_VOLUME_UP_BEHAVIOR_GLOBAL_ACTIONS:
+                                cancelGlobalActionsAction();
+                                break;
+                        }
+                    }
                 });
 
         if (mHasFeatureLeanback) {
@@ -2970,6 +2942,9 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             mSystemNavigationKeysEnabled = Settings.Secure.getIntForUser(resolver,
                     Settings.Secure.SYSTEM_NAVIGATION_KEYS_ENABLED,
                     0, UserHandle.USER_CURRENT) == 1;
+            mRingerToggleChord = Settings.Secure.getIntForUser(resolver,
+                    Settings.Secure.VOLUME_HUSH_GESTURE, VOLUME_HUSH_OFF,
+                    UserHandle.USER_CURRENT);
             mPowerButtonSuppressionDelayMillis = Settings.Global.getInt(resolver,
                     Settings.Global.POWER_BUTTON_SUPPRESSION_DELAY_AFTER_GESTURE_WAKE,
                     POWER_BUTTON_SUPPRESSION_DELAY_DEFAULT_MILLIS);
@@ -3061,15 +3036,10 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                     Settings.Global.POWER_BUTTON_VERY_LONG_PRESS,
                     mContext.getResources().getInteger(
                             com.android.internal.R.integer.config_veryLongPressOnPowerBehavior));
-
-            mPowerVolDownAction = Settings.Secure.getStringForUser(
-                    resolver, Settings.Secure.POWER_VOL_DOWN_ACTION, UserHandle.USER_CURRENT);
-            mKeyCombinationWakeup = Settings.Secure.getIntForUser(
-                    resolver, Settings.Secure.KEY_COMBINATION_WAKEUP, 0, UserHandle.USER_CURRENT);
-            mPowerVolUpAction = Settings.Secure.getStringForUser(
-                    resolver, Settings.Secure.POWER_VOL_UP_ACTION, UserHandle.USER_CURRENT);
-            mVolUpDownAction = Settings.Secure.getStringForUser(
-                    resolver, Settings.Secure.VOL_UP_DOWN_ACTION, UserHandle.USER_CURRENT);
+            mPowerVolUpBehavior = Settings.Global.getInt(resolver,
+                    Settings.Global.KEY_CHORD_POWER_VOLUME_UP,
+                    mContext.getResources().getInteger(
+                            com.android.internal.R.integer.config_keyChordPowerVolumeUp));
         }
         if (updateRotation) {
             updateRotation(true);
@@ -5011,8 +4981,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     }
 
     private void handleKeyGesture(KeyEvent event, boolean interactive) {
-        if (mKeyCombinationManager.interceptKey(
-                event, interactive || mKeyCombinationWakeup == 1)) {
+        if (mKeyCombinationManager.interceptKey(event, interactive)) {
             // handled by combo keys manager.
             mSingleKeyGestureDetector.reset();
             return;
@@ -6665,6 +6634,9 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                 pw.print("mTriplePressOnPowerBehavior=");
                 pw.println(multiPressOnPowerBehaviorToString(mTriplePressOnPowerBehavior));
         pw.print(prefix);
+        pw.print("mPowerVolUpBehavior=");
+        pw.println(powerVolumeUpBehaviorToString(mPowerVolUpBehavior));
+        pw.print(prefix);
                 pw.print("mShortPressOnSleepBehavior=");
                 pw.println(shortPressOnSleepBehaviorToString(mShortPressOnSleepBehavior));
         pw.print(prefix);
@@ -6922,6 +6894,19 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         }
     }
 
+    private static String powerVolumeUpBehaviorToString(int behavior) {
+        switch (behavior) {
+            case POWER_VOLUME_UP_BEHAVIOR_NOTHING:
+                return "POWER_VOLUME_UP_BEHAVIOR_NOTHING";
+            case POWER_VOLUME_UP_BEHAVIOR_MUTE:
+                return "POWER_VOLUME_UP_BEHAVIOR_MUTE";
+            case POWER_VOLUME_UP_BEHAVIOR_GLOBAL_ACTIONS:
+                return "POWER_VOLUME_UP_BEHAVIOR_GLOBAL_ACTIONS";
+            default:
+                return Integer.toString(behavior);
+        }
+    }
+
     private static String multiPressOnPowerBehaviorToString(int behavior) {
         switch (behavior) {
             case MULTI_PRESS_POWER_NOTHING:
@@ -7064,12 +7049,4 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         }
     }
 
-    @Override
-    public void takeFullScreenshot() {
-        if (mHandler == null)
-            return;
-        mScreenshotRunnable.setScreenshotType(TAKE_SCREENSHOT_FULLSCREEN);
-        mScreenshotRunnable.setScreenshotSource(SCREENSHOT_KEY_CHORD);
-        mHandler.post(mScreenshotRunnable);
-    }
 }

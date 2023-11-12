@@ -345,7 +345,4 @@ oneway interface IStatusBar
      * @param packageName of the session for which the output switcher is shown.
      */
     void showMediaOutputSwitcher(String packageName);
-     * Triggers custom gesture actions.
-     */
-    void onCustomGestureAction(String action);
 }

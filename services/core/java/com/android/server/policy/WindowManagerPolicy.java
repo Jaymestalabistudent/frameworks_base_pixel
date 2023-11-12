@@ -1191,9 +1191,4 @@ public interface WindowManagerPolicy extends WindowManagerPolicyConstants {
      * A new window on default display has been focused.
      */
     default void onDefaultDisplayFocusChangedLw(WindowState newFocus) {}
-
-    /**
-     * Take a full screenshot at system level, just like what power + vol down normally does.
-     */
-    default void takeFullScreenshot() {}
 }
