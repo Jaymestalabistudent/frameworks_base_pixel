@@ -11853,6 +11853,11 @@ public final class Settings {
          * @hide
          */
         public static final String LAUNCHER_HIDDEN_APPS = "launcher_hidden_apps";
+        /***
+        * Control whether GMS is enabled for this user.
+         * @hide
+         */
+        public static final String GMS_ENABLED = "gms_enabled";
 
         /**
          * What happens when the user presses the Home button when the
