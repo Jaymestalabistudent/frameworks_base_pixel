@@ -78,7 +78,7 @@
             android:layout_marginTop="@dimen/qs_brightness_margin_top"
             android:layout_marginBottom="@dimen/qs_brightness_margin_bottom"
             android:id="@+id/qs_brightness_dialog"/>
-
+ </FrameLayout>
         <include layout="@layout/footer_actions"
             android:id="@+id/qs_footer_actions"/>
 
