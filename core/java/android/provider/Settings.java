@@ -11961,11 +11961,6 @@ public final class Settings {
         @SystemApi(client = SystemApi.Client.MODULE_LIBRARIES)
         @SuppressLint("NoSettingsProvider")
         public static final String TETHERING_ALLOW_VPN_UPSTREAMS = "tethering_allow_vpn_upstreams";
-   /**
-         * Control whether privacy indicator should be hidden.
-         * @hide
-         */
-        public static final String HIDE_PRIVACY_INDICATOR = "hide_privacy_indicator";
 
         /**
          * These entries are considered common between the personal and the managed profile,
