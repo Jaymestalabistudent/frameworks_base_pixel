@@ -653,13 +653,6 @@
         <item>disabled</item>
     </array>
 
-    <!-- Images offered as options in the avatar picker. If populated, the avatar_image_descriptions
-         array must also be populated with a content description for each image. -->
-    <array name="avatar_images"/>
-
-    <!-- Content descriptions for each of the images in the avatar_images array. -->
-    <string-array name="avatar_image_descriptions"/>
-
     <string-array name="entries_font_size">
         <item msgid="6490061470416867723">Small</item>
         <item msgid="3579015730662088893">Default</item>
