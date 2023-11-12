@@ -54,7 +54,6 @@ import static android.os.Process.setProcessGroup;
 import static android.os.Process.setCgroupProcsProcessGroup;
 import static android.os.Process.setThreadPriority;
 import static android.os.Process.setThreadScheduler;
-import static android.provider.Settings.Global.FORCE_BACKGROUND_FREEZER;
 
 import static com.android.server.am.ActivityManagerDebugConfig.DEBUG_ALL;
 import static com.android.server.am.ActivityManagerDebugConfig.DEBUG_BACKUP;
@@ -82,20 +81,17 @@ import android.annotation.Nullable;
 import android.app.ActivityManager;
 import android.app.ActivityThread;
 import android.app.ApplicationExitInfo;
-import android.app.AppOpsManager;
 import android.app.usage.UsageEvents;
 import android.compat.annotation.ChangeId;
 import android.compat.annotation.EnabledAfter;
 import android.compat.annotation.EnabledSince;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
-import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.ServiceInfo;
-import android.database.ContentObserver;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.PowerManagerInternal;
@@ -104,7 +100,6 @@ import android.os.RemoteException;
 import android.os.SystemClock;
 import android.os.SystemProperties;
 import android.os.Trace;
-import android.provider.Settings;
 import android.util.ArrayMap;
 import android.util.ArraySet;
 import android.util.BoostFramework;
@@ -282,11 +277,6 @@ public class OomAdjuster {
     @GuardedBy("mService")
     private boolean mPendingFullOomAdjUpdate = false;
 
-
-    private AppOpsManager mAppOpsManager;
-
-    boolean mForceBackgroundFreezerEnabled;
-
     /** Overrideable by a test */
     @VisibleForTesting
     protected boolean isChangeEnabled(@CachedCompatChangeId int cachedCompatChangeId,
@@ -377,28 +367,6 @@ public class OomAdjuster {
                 }
             }, filter, null, mService.mHandler);
         }
-    }
-
-    private AppOpsManager getAppOpsManager() {
-        if (mAppOpsManager == null) {
-            mAppOpsManager = mService.mContext.getSystemService(AppOpsManager.class);
-        }
-        return mAppOpsManager;
-    }
-
-    void registerContentObserver() {
-        ContentResolver cr = mService.mContext.getContentResolver();
-        mForceBackgroundFreezerEnabled =
-                Settings.Global.getInt(cr, FORCE_BACKGROUND_FREEZER, 0) == 1;
-        cr.registerContentObserver(Settings.Global.getUriFor(FORCE_BACKGROUND_FREEZER), false,
-            new ContentObserver(mService.mHandler) {
-                @Override
-                public void onChange(boolean selfChange) {
-                    mForceBackgroundFreezerEnabled =
-                            Settings.Global.getInt(cr, FORCE_BACKGROUND_FREEZER, 0) == 1;
-                }
-            }
-        );
     }
 
     /**
@@ -3265,18 +3233,6 @@ public class OomAdjuster {
         }
 
         if (app.mOptRecord.isFreezeExempt()) {
-            return;
-        }
-
-        mCachedAppOptimizer.mForceFreezePolicy.record(app);
-
-        if (mForceBackgroundFreezerEnabled && getAppOpsManager().checkOpNoThrow(
-                AppOpsManager.OP_RUN_ANY_IN_BACKGROUND,
-                app.info.uid, app.info.packageName) != AppOpsManager.MODE_ALLOWED) {
-            if (mCachedAppOptimizer.mForceFreezePolicy.shouldFreeze(app))
-                mCachedAppOptimizer.freezeAppAsyncLSPForce(app);
-            else
-                mCachedAppOptimizer.unfreezeAppLSPForce(app);
             return;
         }
 

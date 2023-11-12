@@ -1543,7 +1543,14 @@ public final class BroadcastQueue {
                 info.activityInfo.name);
 
         boolean skip = false;
-        if (brOptions != null &&
+        if (isBootCompletedIntent(r.intent) &&
+                mService.shouldSkipBootCompletedBroadcastForPackage(
+                        info.activityInfo.applicationInfo)) {
+            Slog.i(TAG, "BOOT_COMPLETED broadcast skipped because of strict standby for "
+                    + info.activityInfo.applicationInfo.packageName);
+            skip = true;
+        }
+        if (!skip && brOptions != null &&
                 (info.activityInfo.applicationInfo.targetSdkVersion
                         < brOptions.getMinManifestReceiverApiLevel() ||
                 info.activityInfo.applicationInfo.targetSdkVersion
