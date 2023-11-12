@@ -707,7 +707,10 @@ interface IActivityManager {
      */
     boolean enableAppFreezer(in boolean enable);
 
-    
+    /**
+     * Return whether app freezer is currently enabled.
+     */
+    boolean isAppFreezerEnabled();
 
     /**
      * Suppress or reenable the rate limit on foreground service notification deferral.
