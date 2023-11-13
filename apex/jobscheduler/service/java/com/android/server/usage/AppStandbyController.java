@@ -501,8 +501,6 @@ public class AppStandbyController
     private PackageManager mPackageManager;
     Injector mInjector;
 
-    private boolean mStrictStandbyPolicyEnabled;
-
     private static class Pool<T> {
         private final T[] mArray;
         private int mSize = 0;
@@ -640,27 +638,9 @@ public class AppStandbyController
         }
     }
 
-    private void setStrictStandbyPolicyEnabled(boolean enabled) {
-        if (mStrictStandbyPolicyEnabled == enabled)
-            return;
-
-        synchronized (mAppIdleLock) {
-            final boolean oldParoleState = isInParole();
-            mStrictStandbyPolicyEnabled = enabled;
-            if (isInParole() != oldParoleState) {
-                postParoleStateChanged();
-            }
-        }
-    }
-
     @Override
     public boolean isAppIdleEnabled() {
         return mAppIdleEnabled;
-    }
-
-    @Override
-    public boolean isStrictStandbyPolicyEnabled() {
-        return mStrictStandbyPolicyEnabled;
     }
 
     @Override
@@ -860,7 +840,7 @@ public class AppStandbyController
 
     @Override
     public boolean isInParole() {
-        return !mAppIdleEnabled || mIsCharging && !mStrictStandbyPolicyEnabled;
+        return !mAppIdleEnabled || mIsCharging;
     }
 
     private void postParoleStateChanged() {
@@ -3017,8 +2997,6 @@ public class AppStandbyController
             // ADAPTIVE_BATTERY_MANAGEMENT_ENABLED is a user setting, so it has to stay in Settings.
             cr.registerContentObserver(Global.getUriFor(Global.ADAPTIVE_BATTERY_MANAGEMENT_ENABLED),
                     false, this);
-            cr.registerContentObserver(Global.getUriFor(Global.STRICT_STANDBY_POLICY),
-                    false, this);
             mInjector.registerDeviceConfigPropertiesChangedListener(this);
             // Load all the constants.
             // postOneTimeCheckIdleStates() doesn't need to be called on boot.
@@ -3219,10 +3197,6 @@ public class AppStandbyController
             synchronized (mAppIdleLock) {
                 mAllowRestrictedBucket = mInjector.isRestrictedBucketEnabled();
             }
-
-            setStrictStandbyPolicyEnabled(
-                    Global.getInt(mContext.getContentResolver(),
-                            Global.STRICT_STANDBY_POLICY, 0) == 1);
 
             setAppIdleEnabled(mInjector.isAppIdleEnabled());
         }

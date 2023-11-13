@@ -312,5 +312,4 @@ public interface AppStandbyInternal {
 
     /** Clears the last used timestamps data for the given {@code packageName}. */
     void clearLastUsedTimestampsForTest(@NonNull String packageName, @UserIdInt int userId);
-    boolean isStrictStandbyPolicyEnabled();
 }
