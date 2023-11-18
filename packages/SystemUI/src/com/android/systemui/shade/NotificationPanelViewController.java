@@ -56,6 +56,8 @@ import android.annotation.Nullable;
 import android.app.PendingIntent;
 import android.app.StatusBarManager;
 import android.content.ContentResolver;
+import android.content.Context;
+import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.content.Context;
 import android.content.pm.PackageManager.NameNotFoundException;
@@ -260,6 +262,8 @@ import javax.inject.Provider;
 import kotlin.Unit;
 import kotlinx.coroutines.CoroutineDispatcher;
 
+import com.android.systemui.island.IslandView;
+
 @CentralSurfacesComponent.CentralSurfacesScope
 public final class NotificationPanelViewController implements Dumpable {
 
@@ -310,6 +314,9 @@ public final class NotificationPanelViewController implements Dumpable {
     private static final String DOUBLE_TAP_SLEEP_GESTURE =
             "customsystem:" + Settings.System.DOUBLE_TAP_SLEEP_GESTURE;
 
+ 
+    private static final String ISLAND_NOTIFICATION =
+            "system:" + Settings.System.ISLAND_NOTIFICATION;
     private static final Rect M_DUMMY_DIRTY_RECT = new Rect(0, 0, 1, 1);
     private static final Rect EMPTY_RECT = new Rect();
     /**
@@ -640,6 +647,8 @@ public final class NotificationPanelViewController implements Dumpable {
     private int mLockscreenToDreamingTransitionTranslationY;
     private int mGoneToDreamingTransitionTranslationY;
     private int mLockscreenToOccludedTransitionTranslationY;
+
+    private boolean mUseIslandNotification;
 
     private final Runnable mFlingCollapseRunnable = () -> fling(0, false /* expand */,
             mNextCollapseSpeedUpFactor, false /* expandBecauseOfFalsing */);
@@ -1083,6 +1092,8 @@ public final class NotificationPanelViewController implements Dumpable {
         mReTickerComebackIcon = mView.findViewById(R.id.ticker_comeback_icon);
         mReTickerContentTV = mView.findViewById(R.id.ticker_content);
         mNotificationStackScroller = mView.findViewById(R.id.notification_stack_scroller);
+        mNotifIsland = mView.findViewById(R.id.notification_island);
+        mNotifIsland.setScroller(mNotificationStackScroller);
 
         initBottomArea();
 
@@ -1313,6 +1324,12 @@ public final class NotificationPanelViewController implements Dumpable {
             view = stub.inflate();
         }
         return view;
+    }
+    
+    void updateIslandBackground() {
+        boolean nightMode = (mView.getContext().getResources().getConfiguration().uiMode
+                & Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES;
+        mNotifIsland.setIslandBackgroundColorTint(nightMode);
     }
 
     @VisibleForTesting
@@ -2903,6 +2920,7 @@ public final class NotificationPanelViewController implements Dumpable {
 
     public void setHeadsUpManager(HeadsUpManagerPhone headsUpManager) {
         mHeadsUpManager = headsUpManager;
+        mNotifIsland.setHeadsupManager(headsUpManager);
         mHeadsUpManager.addListener(mOnHeadsUpChangedListener);
         mHeadsUpTouchHelper = new HeadsUpTouchHelper(headsUpManager,
                 mNotificationStackScrollLayoutController.getHeadsUpCallback(),
@@ -4306,6 +4324,14 @@ public final class NotificationPanelViewController implements Dumpable {
         public void onThemeChanged() {
             debugLog("onThemeChanged");
             reInflateViews();
+            updateIslandBackground();
+        }
+
+        @Override
+        public void onUiModeChanged() {
+            if (DEBUG_LOGCAT) Log.d(TAG, "onUiModeChanged");
+            resetViews(true);
+            updateIslandBackground();
         }
 
         @Override
@@ -4524,6 +4550,7 @@ public final class NotificationPanelViewController implements Dumpable {
             mStatusBarStateListener.onStateChanged(mStatusBarStateController.getState());
             mConfigurationController.addCallback(mConfigurationListener);
             mTunerService.addTunable(this, DOUBLE_TAP_SLEEP_GESTURE);
+            Dependency.get(TunerService.class).addTunable(this, ISLAND_NOTIFICATION);
             // Theme might have changed between inflating this view and attaching it to the
             // window, so
             // force a call to onThemeChanged
@@ -4548,6 +4575,14 @@ public final class NotificationPanelViewController implements Dumpable {
         public void onTuningChanged(String key, String newValue) {
             if (DOUBLE_TAP_SLEEP_GESTURE.equals(key)) {
                 mDoubleTapToSleepEnabled = TunerService.parseIntegerSwitch(newValue, false);
+            switch (key) {
+
+                case ISLAND_NOTIFICATION:
+                    mUseIslandNotification = TunerService.parseIntegerSwitch(newValue, true);
+                    mNotifIsland.setIslandEnabled(mUseIslandNotification);
+                    break;
+                default:
+                    break;
             }
         }
     }
@@ -5187,6 +5222,17 @@ public final class NotificationPanelViewController implements Dumpable {
         /** Called when the shade starts opening. */
         void onOpenStarted();
     }
+
+    @Override
+    public void showIsland(boolean show) {
+        if (!mUseIslandNotification) return;
+        mNotifIsland.showIsland(show, getExpandedFraction());
+    }
+
+    protected void updateIslandVisibility() {
+        mNotifIsland.updateIslandVisibility(getExpandedFraction());
+    }
+}
 
     /* reTicker */
     public void reTickerView(boolean visibility) {
