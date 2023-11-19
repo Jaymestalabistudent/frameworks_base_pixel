@@ -45,22 +45,7 @@ import javax.inject.Provider;
 @QSScope
 public class QuickQSPanelController extends QSPanelControllerBase<QuickQSPanel> {
 
-    private final QSPanel.OnConfigurationChangedListener mOnConfigurationChangedListener =
-            newConfig -> {
-                int newMaxTiles = getResources().getInteger(R.integer.quick_qs_panel_max_tiles);
-                if (newMaxTiles != mView.getNumQuickTiles()) {
-                    setMaxTiles(newMaxTiles);
-                }
-                mView.updateColumns();
-            };
-
-    // brightness is visible only in split shade
-    private final BrightnessController mBrightnessController;
-    private final BrightnessMirrorHandler mBrightnessMirrorHandler;
-    private final FooterActionsController mFooterActionsController;
-    private final TunerService mTunerService;
-    private final BrightnessSliderController mBrightnessSliderController;
-    private BrightnessMirrorController mBrightnessMirrorController;
+    private final Provider<Boolean> mUsingCollapsedLandscapeMediaProvider;
 
     @Inject
     QuickQSPanelController(QuickQSPanel view, QSHost qsHost,
@@ -105,19 +90,6 @@ public class QuickQSPanelController extends QSPanelControllerBase<QuickQSPanel> 
     @Override
     protected void onViewAttached() {
         super.onViewAttached();
-
-        mTunerService.addTunable(mView, QSPanel.QS_BRIGHTNESS_SLIDER_POSITION);
-        mTunerService.addTunable(mView, QSPanel.QS_SHOW_AUTO_BRIGHTNESS);
-        mTunerService.addTunable(mView, QSPanel.QS_SHOW_BRIGHTNESS_SLIDER);
-
-        mView.setBrightnessRunnable(() -> {
-            mView.updateResources();
-            updateBrightnessMirror();
-        });
-
-        mView.addOnConfigurationChangedListener(mOnConfigurationChangedListener);
-        mView.updateColumns();
-        mBrightnessMirrorHandler.onQsPanelAttached();
     }
 
     @Override
@@ -127,7 +99,6 @@ public class QuickQSPanelController extends QSPanelControllerBase<QuickQSPanel> 
 
     private void setMaxTiles(int parseNumTiles) {
         mView.setMaxTiles(parseNumTiles);
-        mView.updateColumns();
         setTiles();
     }
 
