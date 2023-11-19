@@ -23,7 +23,7 @@
         android:layout_height="match_parent"
         android:singleLine="true"
         android:textAppearance="@style/TextAppearance.StatusBar.Clock"
-        android:textColor="?android:attr/colorAccent"
+        android:textColor="?android:attr/textColorPrimary"
         android:gravity="center_vertical|start"
         android:importantForAccessibility="no"
         />

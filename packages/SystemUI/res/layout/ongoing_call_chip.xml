@@ -40,7 +40,7 @@
             android:src="@*android:drawable/ic_phone"
             android:layout_width="@dimen/ongoing_call_chip_icon_size"
             android:layout_height="@dimen/ongoing_call_chip_icon_size"
-            android:tint="?android:attr/colorAccent"
+            android:tint="?android:attr/colorPrimary"
         />
 
         <com.android.systemui.statusbar.phone.ongoingcall.OngoingCallChronometer
