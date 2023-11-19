@@ -1166,10 +1166,14 @@ public class DisplayModeDirector {
                 Settings.System.getUriFor(Settings.System.PEAK_REFRESH_RATE);
         private final Uri mMinRefreshRateSetting =
                 Settings.System.getUriFor(Settings.System.MIN_REFRESH_RATE);
+	private final Uri mPreferredRefreshRateSetting =
+                Settings.System.getUriFor(Settings.System.PREFERRED_REFRESH_RATE);
         private final Uri mLowPowerModeSetting =
                 Settings.Global.getUriFor(Settings.Global.LOW_POWER_MODE);
         private final Uri mMatchContentFrameRateSetting =
                 Settings.Secure.getUriFor(Settings.Secure.MATCH_CONTENT_FRAME_RATE);
+        private final Uri mLowPowerRefreshRateSetting =
+                Settings.System.getUriFor(Settings.System.LOW_POWER_REFRESH_RATE);
 
         private final Context mContext;
         private float mDefaultPeakRefreshRate;
@@ -1202,12 +1206,18 @@ public class DisplayModeDirector {
         public void observe() {
             final ContentResolver cr = mContext.getContentResolver();
             mInjector.registerPeakRefreshRateObserver(cr, this);
+            cr.registerContentObserver(mPeakRefreshRateSetting, false /*notifyDescendants*/, this,
+                    UserHandle.USER_SYSTEM);
             cr.registerContentObserver(mMinRefreshRateSetting, false /*notifyDescendants*/, this,
+                    UserHandle.USER_SYSTEM);
+	    cr.registerContentObserver(mPreferredRefreshRateSetting, false /*notifyDescendants*/, this,
                     UserHandle.USER_SYSTEM);
             cr.registerContentObserver(mLowPowerModeSetting, false /*notifyDescendants*/, this,
                     UserHandle.USER_SYSTEM);
             cr.registerContentObserver(mMatchContentFrameRateSetting, false /*notifyDescendants*/,
                     this);
+            cr.registerContentObserver(mLowPowerRefreshRateSetting, false /*notifyDescendants*/, this,
+                    UserHandle.USER_SYSTEM);
 
             Float deviceConfigDefaultPeakRefresh =
                     mDeviceConfigDisplaySettings.getDefaultPeakRefreshRate();
@@ -1246,9 +1256,11 @@ public class DisplayModeDirector {
         public void onChange(boolean selfChange, Uri uri, int userId) {
             synchronized (mLock) {
                 if (mPeakRefreshRateSetting.equals(uri)
-                        || mMinRefreshRateSetting.equals(uri)) {
+                        || mMinRefreshRateSetting.equals(uri)
+                        || mPreferredRefreshRateSetting.equals(uri)) {
                     updateRefreshRateSettingLocked();
-                } else if (mLowPowerModeSetting.equals(uri)) {
+                } else if (mLowPowerModeSetting.equals(uri)
+                        || mLowPowerRefreshRateSetting.equals(uri)) {
                     updateLowPowerModeSettingLocked();
                 } else if (mMatchContentFrameRateSetting.equals(uri)) {
                     updateModeSwitchingTypeSettingLocked();
@@ -1290,8 +1302,10 @@ public class DisplayModeDirector {
         private void updateLowPowerModeSettingLocked() {
             boolean inLowPowerMode = Settings.Global.getInt(mContext.getContentResolver(),
                     Settings.Global.LOW_POWER_MODE, 0 /*default*/) != 0;
+            boolean shouldSwitchRefreshRate = Settings.System.getInt(mContext.getContentResolver(),
+                    Settings.System.LOW_POWER_REFRESH_RATE, 1 /*default*/) != 0;
             final Vote vote;
-            if (inLowPowerMode) {
+            if (inLowPowerMode && shouldSwitchRefreshRate) {
                 vote = Vote.forRefreshRates(0f, 60f);
             } else {
                 vote = null;
@@ -1301,12 +1315,13 @@ public class DisplayModeDirector {
         }
 
         private void updateRefreshRateSettingLocked() {
-            final ContentResolver cr = mContext.getContentResolver();
-            float minRefreshRate = Settings.System.getFloatForUser(cr,
-                    Settings.System.MIN_REFRESH_RATE, 0f, cr.getUserId());
-            float peakRefreshRate = Settings.System.getFloatForUser(cr,
-                    Settings.System.PEAK_REFRESH_RATE, mDefaultPeakRefreshRate, cr.getUserId());
-            updateRefreshRateSettingLocked(minRefreshRate, peakRefreshRate, mDefaultRefreshRate);
+            float minRefreshRate = Settings.System.getFloat(mContext.getContentResolver(),
+                    Settings.System.MIN_REFRESH_RATE, 0f);
+            float peakRefreshRate = Settings.System.getFloat(mContext.getContentResolver(),
+                    Settings.System.PEAK_REFRESH_RATE, mDefaultPeakRefreshRate);
+            float preferredRefreshRate = Settings.System.getFloat(mContext.getContentResolver(),
+                    Settings.System.PREFERRED_REFRESH_RATE, mDefaultRefreshRate);
+            updateRefreshRateSettingLocked(minRefreshRate, peakRefreshRate, preferredRefreshRate);
         }
 
         private void updateRefreshRateSettingLocked(
