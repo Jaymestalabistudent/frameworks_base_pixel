@@ -28,7 +28,7 @@
         android:singleLine="true"
         android:textAppearance="@style/TextAppearance.StatusBar.Expanded.Clock"
         android:textSize="@dimen/qs_time_collapsed_size"
-        android:textColor="?android:attr/colorAccent"
+        android:textColor="?android:attr/textColorPrimary"
         />
     <TextClock
         android:id="@+id/am_pm_view"
