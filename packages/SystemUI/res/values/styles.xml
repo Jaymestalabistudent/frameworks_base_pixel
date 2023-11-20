@@ -20,30 +20,30 @@
     <style name="TextAppearance.StatusBar.Clock" parent="@*android:style/TextAppearance.StatusBar.Icon">
         <item name="android:textSize">@dimen/status_bar_clock_size</item>
         <item name="android:fontFamily">@*android:string/config_headlineFontFamilyMedium</item>
-        <item name="android:textColor">?android:attr/colorAccent</item>
+        <item name="android:textColor">@color/status_bar_clock_color</item>
     </style>
 
     <style name="TextAppearance.StatusBar.UserChip" parent="@*android:style/TextAppearance.StatusBar.Icon">
         <item name="android:textSize">@dimen/status_bar_user_chip_text_size</item>
         <item name="android:fontFamily">@*android:string/config_headlineFontFamilyMedium</item>
-        <item name="android:textColor">?android:attr/colorAccent</item>
+        <item name="android:textColor">@color/status_bar_clock_color</item>
     </style>
 
     <style name="TextAppearance.StatusBar.Expanded" parent="@*android:style/TextAppearance.StatusBar">
-        <item name="android:textColor">?android:attr/colorAccent</item>
+        <item name="android:textColor">?android:attr/textColorTertiary</item>
     </style>
 
     <style name="TextAppearance.StatusBar.Expanded.Clock">
         <item name="android:textSize">@dimen/qs_time_expanded_size</item>
         <item name="android:fontFamily">@*android:string/config_headlineFontFamilyMedium</item>
-        <item name="android:textColor">?android:attr/colorAccent</item>
-        <item name="android:textStyle">bold</item>
+        <item name="android:textColor">?android:attr/textColorPrimary</item>
+        <item name="android:textStyle">normal</item>
     </style>
 
     <style name="TextAppearance.StatusBar.Expanded.Date">
         <item name="android:textSize">@dimen/qs_time_expanded_size</item>
-        <item name="android:textStyle">bold</item>
-        <item name="android:textColor">?android:attr/colorAccent</item>
+        <item name="android:textStyle">normal</item>
+        <item name="android:textColor">?android:attr/textColorPrimary</item>
         <item name="android:fontFamily">@*android:string/config_bodyFontFamily</item>
     </style>
 
@@ -73,7 +73,7 @@
     <style name="TextAppearance" />
 
     <style name="TextAppearance.QS">
-        <item name="android:textStyle">bold</item>
+        <item name="android:textStyle">normal</item>
         <item name="android:textColor">?android:attr/textColorPrimary</item>
         <item name="android:fontFamily">@*android:string/config_bodyFontFamily</item>
     </style>
@@ -93,8 +93,8 @@
     </style>
 
     <style name="TextAppearance.QS.Warning">
-        <item name="android:textSize">18sp</item>
-        <item name="android:textColor">?android:attr/colorAccent</item>
+        <item name="android:textSize">14sp</item>
+        <item name="android:textColor">?android:attr/colorError</item>
     </style>
 
     <style name="TextAppearance.QS.SegmentedButton">
@@ -112,7 +112,7 @@
     </style>
 
     <style name="TextAppearance.QS.DataUsage.Secondary">
-        <item name="android:textColor">?android:attr/colorAccent</item>
+        <item name="android:textColor">?android:attr/textColorSecondary</item>
     </style>
 
     <style name="TextAppearance.QS.TileLabel">
@@ -136,7 +136,7 @@
     <style name="TextAppearance.QS.Status">
         <item name="android:fontFamily">@*android:string/config_headlineFontFamily</item>
         <item name="android:textColor">?android:attr/textColorPrimary</item>
-        <item name="android:textSize">16sp</item>
+        <item name="android:textSize">14sp</item>
         <item name="android:letterSpacing">0.01</item>
     </style>
 
@@ -368,12 +368,12 @@
     <style name="Theme.SystemUI.QuickSettings" parent="@*android:style/Theme.DeviceDefault">
         <item name="lightIconTheme">@style/QSIconTheme</item>
         <item name="darkIconTheme">@style/QSIconTheme</item>
-        <item name="android:colorError">?android:attr/colorAccent</item>
+        <item name="android:colorError">@*android:color/error_color_material_dark</item>
         <item name="android:windowIsFloating">true</item>
         <item name="android:homeAsUpIndicator">@drawable/ic_arrow_back</item>
         <item name="offStateColor">@color/material_dynamic_neutral20</item>
         <item name="underSurfaceColor">@color/material_dynamic_neutral0</item>
-        <item name="android:colorBackground">@android:color/transparent</item>
+        <item name="android:colorBackground">@color/material_dynamic_neutral10</item>
         <item name="android:itemTextAppearance">@style/Control.MenuItem</item>
     </style>
 
@@ -397,7 +397,7 @@
         <item name="android:buttonBarPositiveButtonStyle">@style/Widget.Dialog.Button</item>
         <item name="android:buttonBarNegativeButtonStyle">@style/Widget.Dialog.Button.BorderButton</item>
         <item name="android:buttonBarNeutralButtonStyle">@style/Widget.Dialog.Button.BorderButton</item>
-        <item name="android:colorBackground">?android:attr/colorAccent</item>
+        <item name="android:colorBackground">?androidprv:attr/colorSurface</item>
         <item name="android:alertDialogStyle">@style/ScrollableAlertDialogStyle</item>
         <item name="android:buttonBarStyle">@style/ButtonBarStyle</item>
         <item name="android:buttonBarButtonStyle">@style/Widget.Dialog.Button.Large</item>
@@ -419,7 +419,7 @@
     <style name="Theme.SystemUI.Dialog.Alert" parent="@*android:style/Theme.DeviceDefault.Light.Dialog.Alert" />
 
     <style name="Theme.SystemUI.Dialog.GlobalActions" parent="@android:style/Theme.DeviceDefault.Light.NoActionBar.Fullscreen">
-        <item name="android:colorError">?android:attr/colorAccent</item>
+        <item name="android:colorError">@*android:color/error_color_material_dark</item>
         <item name="android:windowIsFloating">true</item>
     </style>
 
@@ -486,15 +486,16 @@
     <style name="ScreenPinningRequestTheme" parent="@*android:style/ThemeOverlay.DeviceDefault.Accent">
         <item name="singleToneColor">@color/light_mode_icon_color_single_tone</item>
     </style>
+
     <style name="TextAppearance.Volume">
-        <item name="android:textStyle">bold</item>
-        <item name="android:textColor">?android:attr/colorAccent</item>
+        <item name="android:textStyle">normal</item>
+        <item name="android:textColor">?android:attr/textColorPrimary</item>
         <item name="android:fontFamily">@*android:string/config_bodyFontFamily</item>
     </style>
 
     <style name="TextAppearance.Volume.Header">
-        <item name="android:textSize">16sp</item>
-        <item name="android:textColor">?android:attr/textColorPrimary</item>
+        <item name="android:textSize">12sp</item>
+        <item name="android:textColor">?android:attr/textColorSecondary</item>
     </style>
 
     <style name="VolumeButtons" parent="@android:style/Widget.Material.Button.Borderless">
@@ -519,7 +520,7 @@
     </style>
 
     <style name="TextAppearance.NotificationInfo.Confirmation">
-        <item name="android:textSize">16sp</item>
+        <item name="android:textSize">14sp</item>
         <item name="android:alpha">0.87</item>
     </style>
 
@@ -538,7 +539,7 @@
 
     <style name="TextAppearance.NotificationImportanceChannel">
         <item name="android:textSize">@dimen/notification_importance_channel_text</item>
-        <item name="android:fontFamily">@*android:string/config_headlineFontFamily</item>
+        <item name="android:fontFamily">@*android:string/config_headlineFontFamilyMedium</item>
         <item name="android:textColor">@color/notification_guts_header_text_color</item>
         <item name="android:textSize">@dimen/notification_importance_channel_text</item>
     </style>
@@ -572,7 +573,7 @@
 
     <style name="TextAppearance.NotificationImportanceButton">
         <item name="android:textSize">@dimen/notification_importance_button_text</item>
-        <item name="android:fontFamily">@*android:string/config_headlineFontFamily</item>
+        <item name="android:fontFamily">@*android:string/config_headlineFontFamilyMedium</item>
         <item name="android:textColor">@color/notification_guts_priority_contents</item>
         <item name="android:gravity">center</item>
     </style>
@@ -582,7 +583,7 @@
         parent="@android:style/Widget.DeviceDefault.Button.Borderless">
         <item name="android:textColor">?android:attr/textColorPrimary</item>
         <item name="android:textAllCaps">false</item>
-        <item name="android:textSize">16sp</item>
+        <item name="android:textSize">14sp</item>
         <item name="android:minWidth">0dp</item>
     </style>
 
@@ -591,7 +592,7 @@
     </style>
 
     <style name="TextAppearance.QSEdit" >
-        <item name="android:textSize">16sp</item>
+        <item name="android:textSize">14sp</item>
         <item name="android:letterSpacing">0.01</item>
         <item name="android:lineHeight">20sp</item>
         <item name="android:fontFamily">@*android:string/config_headlineFontFamily</item>
@@ -599,13 +600,13 @@
     </style>
 
     <style name="QSCustomizeToolbar" parent="@*android:style/Widget.DeviceDefault.Toolbar">
-        <item name="android:textColor">?android:attr/colorAccent</item>
+        <item name="android:textColor">?android:attr/textColorPrimary</item>
         <item name="android:elevation">10dp</item>
     </style>
 
     <!-- Media controls always have light background -->
     <style name="MediaPlayer" parent="@*android:style/Theme.DeviceDefault.Light">
-        <item name="android:textColor">?android:attr/colorAccent</item>
+        <item name="android:textColor">?android:attr/textColorPrimary</item>
         <item name="android:backgroundTint">@color/material_dynamic_secondary95</item>
     </style>
 
@@ -613,14 +614,14 @@
         <item name="android:thumb">@drawable/media_seekbar_thumb</item>
         <item name="android:thumbTint">?android:attr/textColorPrimary</item>
         <item name="android:progressDrawable">@drawable/media_squiggly_progress</item>
-        <item name="android:progressTint">?android:attr/colorAccent</item>
+        <item name="android:progressTint">?android:attr/textColorPrimary</item>
         <item name="android:progressBackgroundTint">?android:attr/textColorTertiary</item>
         <item name="android:clickable">true</item>
         <item name="android:splitTrack">false</item>
     </style>
 
     <style name="MediaPlayer.Subtitle" parent="MediaPlayer">
-        <item name="android:textColor">?android:attr/colorAccent</item>
+        <item name="android:textColor">?android:attr/textColorSecondary</item>
     </style>
 
     <style name="MediaPlayer.ScrubbingTime">
@@ -631,7 +632,7 @@
 
     <style name="MediaPlayer.Action" parent="@android:style/Widget.Material.Button.Borderless.Small">
         <item name="android:background">@drawable/qs_media_light_source</item>
-        <item name="android:tint">?android:attr/colorAccent</item>
+        <item name="android:tint">?android:attr/textColorPrimary</item>
         <item name="android:stateListAnimator">@anim/media_button_state_list_animator</item>
         <item name="android:paddingTop">8dp</item>
         <item name="android:paddingStart">12dp</item>
@@ -643,7 +644,7 @@
     <style name="MediaPlayer.SessionAction"
            parent="@android:style/Widget.Material.Button.Borderless.Small">
         <item name="android:background">@drawable/qs_media_light_source</item>
-        <item name="android:tint">?android:attr/colorAccent</item>
+        <item name="android:tint">?android:attr/textColorPrimary</item>
         <item name="android:paddingTop">12dp</item>
         <item name="android:paddingStart">12dp</item>
         <item name="android:paddingEnd">12dp</item>
@@ -714,11 +715,11 @@
         <item name="android:maxLines">1</item>
         <item name="android:ellipsize">end</item>
         <item name="android:textSize">14sp</item>
-        <item name="android:gravity">center</item>
+        <item name="android:gravity">start</item>
     </style>
 
     <style name="MediaPlayer.Recommendation.Text.Title">
-        <item name="android:textColor">?android:attr/colorAccent</item>
+        <item name="android:textColor">?android:attr/textColorPrimary</item>
     </style>
 
     <style name="MediaPlayer.Recommendation.Text.Subtitle">
@@ -735,8 +736,8 @@
     </style>
 
     <style name="ChargingAnim.DarkBackground">
-        <item name="chargingAnimColor">?android:attr/colorAccent</item>
-        <item name="android:textColor">?android:attr/colorAccent</item>
+        <item name="chargingAnimColor">@android:color/white</item>
+        <item name="android:textColor">@android:color/white</item>
     </style>
 
     <!-- Screen recording -->
@@ -807,7 +808,7 @@
         <item name="android:textAlignment">viewStart</item>
         <item name="android:textSize">16sp</item>
         <item name="android:clickable">true</item>
-        <item name="android:background">?android:attr/colorAccent</item>
+        <item name="android:background">?android:attr/selectableItemBackground</item>
         <item name="android:textColor">?android:attr/textColorPrimary</item>
     </style>
 
@@ -953,9 +954,9 @@
     <style name="Theme.ControlsRequestDialog" parent="@*android:style/Theme.DeviceDefault.Dialog.Alert"/>
 
     <style name="TextAppearance.PrivacyDialog">
-        <item name="android:textSize">16sp</item>
+        <item name="android:textSize">14sp</item>
         <item name="android:fontFamily">@*android:string/config_headlineFontFamily</item>
-        <item name="android:textColor">?android:attr/colorAccent</item>
+        <item name="android:textColor">?android:attr/textColorPrimary</item>
     </style>
 
     <!-- Wallet styles -->
@@ -963,7 +964,7 @@
 
     <style name="Wallet.TextAppearance">
       <item name="android:fontFamily">@*android:string/config_headlineFontFamily</item>
-      <item name="android:textColor">?android:attr/colorAccent</item>
+      <item name="android:textColor">?android:attr/textColorPrimary</item>
       <item name="android:singleLine">true</item>
       <item name="android:textSize">14sp</item>
     </style>
@@ -1146,7 +1147,7 @@
     <style name="TextAppearance.InternetDialog">
         <item name="android:fontFamily">@*android:string/config_headlineFontFamily</item>
         <item name="android:textSize">16sp</item>
-        <item name="android:textColor">?android:attr/colorAccent</item>
+        <item name="android:textColor">?android:attr/textColorPrimary</item>
         <item name="android:textDirection">locale</item>
     </style>
 
