@@ -6170,12 +6170,6 @@ public final class Settings {
          * @hide
          */
         public static final String QQS_LAYOUT = "qqs_layout";
-        
-        /**
-         * @hide
-         */
-        public static final String ISLAND_NOTIFICATION = "island_notification";
-        
         /**
          * These are all public system settings
          *
