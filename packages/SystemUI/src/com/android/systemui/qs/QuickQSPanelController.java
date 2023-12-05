@@ -65,7 +65,7 @@ public class QuickQSPanelController extends QSPanelControllerBase<QuickQSPanel> 
             MetricsLogger metricsLogger, UiEventLogger uiEventLogger, QSLogger qsLogger,
             DumpManager dumpManager,
             @Main Handler mainHandler,
-            SystemSettings systemSettings,
+            SystemSettings systemSettings
     ) {
         super(view, qsHost, qsCustomizerController, usingMediaPlayer, mediaHost, metricsLogger,
                 uiEventLogger, qsLogger, dumpManager, mainHandler, systemSettings);
