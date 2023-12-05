@@ -370,9 +370,8 @@ public class EdgeBackGestureHandler implements PluginListener<NavigationEdgeBack
         mBackGestureTfClassifierProviderProvider = backGestureTfClassifierProviderProvider;
         mFeatureFlags = featureFlags;
         mLastReportedConfig.setTo(mContext.getResources().getConfiguration());
-        int defaultLauncher = SystemProperties.getInt("persist.sys.default_launcher", 0);
-        String[] launcherComponents = context.getResources().getStringArray(com.android.internal.R.array.config_launcherComponents);
-        ComponentName recentsComponentName = ComponentName.unflattenFromString(launcherComponents[defaultLauncher]);
+        ComponentName recentsComponentName = ComponentName.unflattenFromString(
+                context.getString(com.android.internal.R.string.config_recentsComponentName));
         if (recentsComponentName != null) {
             String recentsPackageName = recentsComponentName.getPackageName();
             PackageManager manager = context.getPackageManager();
