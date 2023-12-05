@@ -175,7 +175,7 @@ public class DefaultAppProvider {
         }
         final long identity = Binder.clearCallingIdentity();
         try {
-            return roleName == RoleManager.ROLE_HOME ? (defaultLauncher == 0 ?  "com.google.android.apps.nexuslauncher" :"com.android.launcher3") : CollectionUtils.firstOrNull(roleManager.getRoleHoldersAsUser(roleName,
+            return roleName == RoleManager.ROLE_HOME ? (defaultLauncher == 0 ? "com.android.launcher3" : "com.google.android.apps.nexuslauncher") : CollectionUtils.firstOrNull(roleManager.getRoleHoldersAsUser(roleName,
                     UserHandle.of(userId)));
         } finally {
             Binder.restoreCallingIdentity(identity);
