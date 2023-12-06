@@ -15,7 +15,15 @@
      limitations under the License.
 -->
 <resources>
-
+    <!-- Clock without header -->
+    <dimen name="widget_big_font_size">54dp</dimen>
+    <dimen name="bottom_text_spacing_digital">0dp</dimen>
+    <dimen name="title_clock_padding">4dp</dimen>
+    <!-- Clock with header -->
+    <dimen name="widget_small_font_size">@dimen/widget_title_font_size</dimen>
+    <dimen name="widget_vertical_padding">17dp</dimen>
+    <dimen name="widget_vertical_padding_with_header">25dp</dimen>
+    <dimen name="widget_vertical_padding_clock">12dp</dimen>
     <!-- Padding added to keyguard status area when Type clock is in use -->
     <dimen name="keyguard_status_area_typeclock_padding">32dp</dimen>
 </resources>
