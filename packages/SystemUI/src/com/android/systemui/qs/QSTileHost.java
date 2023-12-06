@@ -184,7 +184,7 @@ public class QSTileHost implements QSHost, Tunable, PluginListener<QSFactory>, P
             mAutoTiles = autoTiles.get();
             mTileServiceRequestController.init();
         });
-
+    }
 
     private void setSecureTileDisabledOnLockscreen() {
         mIsSecureTileDisabledOnLockscreen = mSecureSettings.getIntForUser(
