@@ -11815,14 +11815,7 @@ public final class Settings {
          */
         public static final String DEVICE_STATE_ROTATION_LOCK =
                 "device_state_rotation_lock";
-                
-        /**
-        * Whether to show privacy indicator for location
-        * Default value is based on it's device config flag
-        * @hide
-        */
-        public static final String ENABLE_LOCATION_PRIVACY_INDICATOR = "enable_location_privacy_indicator";
-       
+
         /**
          * Control whether communal mode is allowed on this device.
          *

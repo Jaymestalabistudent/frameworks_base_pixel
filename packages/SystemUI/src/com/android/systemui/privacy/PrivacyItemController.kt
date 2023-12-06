@@ -16,14 +16,6 @@
 
 package com.android.systemui.privacy
 
-import android.app.AppOpsManager
-import android.content.Context
-import android.content.Intent
-import android.content.IntentFilter
-import android.content.pm.UserInfo
-import android.os.UserHandle
-import android.provider.DeviceConfig
-import android.provider.Settings
 import com.android.internal.annotations.VisibleForTesting
 import com.android.systemui.Dumpable
 import com.android.systemui.appops.AppOpsController
@@ -34,7 +26,6 @@ import com.android.systemui.dump.DumpManager
 import com.android.systemui.privacy.logging.PrivacyLogger
 import com.android.systemui.util.asIndenting
 import com.android.systemui.util.concurrency.DelayableExecutor
-import com.android.systemui.util.settings.SecureSettings
 import com.android.systemui.util.time.SystemClock
 import com.android.systemui.util.withIncreasedIndent
 import java.io.PrintWriter
@@ -50,8 +41,7 @@ class PrivacyItemController @Inject constructor(
     private val privacyItemMonitors: Set<@JvmSuppressWildcards PrivacyItemMonitor>,
     private val logger: PrivacyLogger,
     private val systemClock: SystemClock,
-    dumpManager: DumpManager,
-    private val secureSettings: SecureSettings
+    dumpManager: DumpManager
 ) : Dumpable {
 
     @VisibleForTesting
@@ -65,16 +55,6 @@ class PrivacyItemController @Inject constructor(
         @Synchronized get() = field.toList() // Returns a shallow copy of the list
         @Synchronized set
 
-
-    private fun isLocationEnabled(): Boolean {
-        val isEnabledDeviceConfig = deviceConfigProxy.getBoolean(DeviceConfig.NAMESPACE_PRIVACY,
-                LOCATION, DEFAULT_LOCATION)
-        return secureSettings.getIntForUser(
-            Settings.Secure.ENABLE_LOCATION_PRIVACY_INDICATOR,
-            if (isEnabledDeviceConfig) 1 else 0, UserHandle.USER_CURRENT) == 1
-    }
-
-    private var currentUserIds = emptyList<Int>()
     private var listening = false
     private val callbacks = mutableListOf<WeakReference<Callback>>()
     private val internalUiExecutor = MyExecutor(uiExecutor)
