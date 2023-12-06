@@ -130,7 +130,7 @@ public class NotificationIconAreaController implements
             DemoModeController demoModeController,
             DarkIconDispatcher darkIconDispatcher,
             StatusBarWindowController statusBarWindowController,
-            ScreenOffAnimationController screenOffAnimationController) {
+            ScreenOffAnimationController screenOffAnimationController,
             UnlockedScreenOffAnimationController unlockedScreenOffAnimationController,
             @Main Handler handler,
             SystemSettings systemSettings) {
