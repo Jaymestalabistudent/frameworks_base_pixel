@@ -301,15 +301,6 @@ public class KeyguardClockSwitch extends RelativeLayout {
         });
         mStatusAreaAnim.start();
     }
-
-    private void adjustStatusAreaPadding(ClockPlugin plugin) {
-        final boolean mIsTypeClock = plugin != null && plugin.getName().equals("type");
-        mKeyguardStatusArea.setRowGravity(mIsTypeClock ? Gravity.LEFT : Gravity.CENTER);
-        mKeyguardStatusArea.setRowPadding(mIsTypeClock ? mContext.getResources()
-                .getDimensionPixelSize(R.dimen.keyguard_status_area_typeclock_padding) : 0, 0, 0,
-                0);
-    }
-
     /**
      * Display the desired clock and hide the other one
      *
