@@ -15,6 +15,8 @@
   limitations under the License.
   -->
 <resources>
+  <color name="typeClockAccentColor">#F5C983</color>
+
   <!-- Default color for hour hand of Bubble clock. -->
   <color name="bubbleHourHandColor">#C97343</color>
   <!-- Default color for minute hand of Bubble clock. -->
