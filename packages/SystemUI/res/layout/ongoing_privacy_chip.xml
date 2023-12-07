@@ -16,9 +16,9 @@
 -->
 
 
-<com.android.systemui.privacy.OngoingPrivacyChip
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<merge xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/privacy_chip"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_height="match_parent"
     android:layout_width="wrap_content"
     android:layout_gravity="center_vertical|end"
