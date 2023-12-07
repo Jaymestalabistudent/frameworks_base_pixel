@@ -1,11 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    
-    <!-- Height of status bar in split shade mode - visible only on large screens -->
-    <dimen name="split_shade_header_height">@*android:dimen/quick_qs_offset_height</dimen>
-    <dimen name="split_shade_header_min_height">@dimen/qs_header_row_min_height</dimen>
-
-    
     <!-- Largest size an avatar might need to be drawn in the power menu user picker -->
     <dimen name="global_actions_avatar_size">24dp</dimen>
 
