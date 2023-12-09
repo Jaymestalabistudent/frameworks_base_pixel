@@ -4524,11 +4524,25 @@ public class PackageManagerService implements PackageSender, TestUtilityService 
                     }
                 });
 
-                if (wasNotLaunched) {
-                    final String installerPackageName =
-                            packageState.getInstallSource().installerPackageName;
-                    if (installerPackageName != null) {
-                        notifyFirstLaunch(packageName, installerPackageName, userId);
+                if (dataOwnerPkg.getLongVersionCode() != requiredInstalledVersionCode) {
+                    Slog.w(TAG, "Required installed version code was "
+                            + requiredInstalledVersionCode
+                            + " but actual installed version is "
+                            + dataOwnerPkg.getLongVersionCode());
+                    return PackageManager.INSTALL_FAILED_WRONG_INSTALLED_VERSION;
+                }
+            }
+
+            if (dataOwnerPkg != null) {
+                if (!PackageManagerServiceUtils.isDowngradePermitted(installFlags,
+                        dataOwnerPkg.isDebuggable())
+                        && Global.getInt(mContext.getContentResolver(),
+                                            Global.PM_DOWNGRADE_ALLOWED, 0) == 0) {
+                    try {
+                        checkDowngrade(dataOwnerPkg, pkgLite);
+                    } catch (PackageManagerException e) {
+                        Slog.w(TAG, "Downgrade detected: " + e.getMessage());
+                        return PackageManager.INSTALL_FAILED_VERSION_DOWNGRADE;
                     }
                 }
 
