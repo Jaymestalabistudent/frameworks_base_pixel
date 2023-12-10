@@ -116,15 +116,13 @@
     </style>
 
     <style name="TextAppearance.QS.TileLabel">
-        <item name="android:textSize">@dimen/kscope_qs_tile_text_size</item>
+        <item name="android:textSize">@dimen/qs_tile_text_size</item>
         <item name="android:letterSpacing">0.01</item>
         <item name="android:lineHeight">20sp</item>
         <item name="android:fontFamily">@*android:string/config_bodyFontFamilyMedium</item>
     </style>
 
     <style name="TextAppearance.QS.TileLabel.Secondary">
-        <item name="android:textSize">@dimen/kscope_qs_tile_secondary_text_size</item>
-        <item name="android:letterSpacing">0.01</item>
         <item name="android:fontFamily">@*android:string/config_bodyFontFamily</item>
     </style>
 
@@ -370,12 +368,12 @@
     <style name="Theme.SystemUI.QuickSettings" parent="@*android:style/Theme.DeviceDefault">
         <item name="lightIconTheme">@style/QSIconTheme</item>
         <item name="darkIconTheme">@style/QSIconTheme</item>
-        <item name="android:colorError">@*android:color/error_color_material_light</item>
+        <item name="android:colorError">@*android:color/error_color_material_dark</item>
         <item name="android:windowIsFloating">true</item>
         <item name="android:homeAsUpIndicator">@drawable/ic_arrow_back</item>
-        <item name="offStateColor">@*android:color/surface_light</item>
-        <item name="underSurfaceColor">@android:color/system_neutral1_100</item>
-        <item name="android:colorBackground">@android:color/system_neutral1_50</item>
+        <item name="offStateColor">@color/material_dynamic_neutral20</item>
+        <item name="underSurfaceColor">@color/material_dynamic_neutral0</item>
+        <item name="android:colorBackground">@color/material_dynamic_neutral10</item>
         <item name="android:itemTextAppearance">@style/Control.MenuItem</item>
     </style>
 
@@ -603,7 +601,7 @@
 
     <style name="QSCustomizeToolbar" parent="@*android:style/Widget.DeviceDefault.Toolbar">
         <item name="android:textColor">?android:attr/textColorPrimary</item>
-        <item name="android:elevation">0dp</item>
+        <item name="android:elevation">10dp</item>
     </style>
 
     <!-- Media controls always have light background -->
