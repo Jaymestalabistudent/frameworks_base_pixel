@@ -17,12 +17,13 @@ package com.android.systemui.shade
 
 import android.animation.Animator
 import android.app.StatusBarManager
-import android.content.Context
-import android.content.res.Resources
-import android.content.res.XmlResourceParser
-import android.graphics.Rect
-import android.testing.AndroidTestingRunner
-import android.view.Display
+import android.content.Intent
+import android.content.res.Configuration
+import android.os.Bundle
+import android.os.Trace
+import android.os.Trace.TRACE_TAG_APP
+import android.provider.AlarmClock
+import android.util.Pair
 import android.view.DisplayCutout
 import android.view.View
 import android.view.ViewPropertyAnimator
@@ -54,100 +55,81 @@ import com.android.systemui.statusbar.policy.Clock
 import com.android.systemui.statusbar.policy.FakeConfigurationController
 import com.android.systemui.statusbar.policy.VariableDateView
 import com.android.systemui.statusbar.policy.VariableDateViewController
-import com.android.systemui.util.mockito.any
-import com.android.systemui.util.mockito.argumentCaptor
-import com.android.systemui.util.mockito.capture
-import com.android.systemui.util.mockito.eq
-import com.android.systemui.util.mockito.mock
-import com.google.common.truth.Truth.assertThat
-import org.junit.Before
-import org.junit.Rule
-import org.junit.Test
-import org.junit.runner.RunWith
-import org.mockito.Answers
-import org.mockito.ArgumentCaptor
-import org.mockito.ArgumentMatchers.anyFloat
-import org.mockito.ArgumentMatchers.anyInt
-import org.mockito.Captor
-import org.mockito.Mock
-import org.mockito.Mockito
-import org.mockito.Mockito.mock
-import org.mockito.Mockito.reset
-import org.mockito.Mockito.verify
-import org.mockito.Mockito.`when` as whenever
-import org.mockito.junit.MockitoJUnit
+import com.android.systemui.util.ViewController
+import java.io.PrintWriter
+import javax.inject.Inject
+import javax.inject.Named
 
-private val EMPTY_CHANGES = ConstraintsChanges()
+/**
+ * Controller for QS header.
+ *
+ * [header] is a [MotionLayout] that has two transitions:
+ * * [HEADER_TRANSITION_ID]: [QQS_HEADER_CONSTRAINT] <-> [QS_HEADER_CONSTRAINT] for portrait
+ *   handheld device configuration.
+ * * [LARGE_SCREEN_HEADER_TRANSITION_ID]: [LARGE_SCREEN_HEADER_CONSTRAINT] for all other
+ *   configurations
+ */
+@CentralSurfacesScope
+class ShadeHeaderController
+@Inject
+constructor(
+    @Named(SHADE_HEADER) private val header: MotionLayout,
+    private val statusBarIconController: StatusBarIconController,
+    private val tintedIconManagerFactory: StatusBarIconController.TintedIconManager.Factory,
+    private val privacyIconsController: HeaderPrivacyIconsController,
+    private val insetsProvider: StatusBarContentInsetsProvider,
+    private val configurationController: ConfigurationController,
+    private val variableDateViewControllerFactory: VariableDateViewController.Factory,
+    @Named(SHADE_HEADER) private val batteryMeterViewController: BatteryMeterViewController,
+    private val dumpManager: DumpManager,
+    private val qsCarrierGroupControllerBuilder: QSCarrierGroupController.Builder,
+    private val combinedShadeHeadersConstraintManager: CombinedShadeHeadersConstraintManager,
+    private val demoModeController: DemoModeController,
+    private val qsBatteryModeController: QsBatteryModeController,
+    private val activityStarter: ActivityStarter
+) : ViewController<View>(header), Dumpable {
 
-@SmallTest
-@RunWith(AndroidTestingRunner::class)
-class ShadeHeaderControllerTest : SysuiTestCase() {
+    companion object {
+        /** IDs for transitions and constraints for the [MotionLayout]. */
+        @VisibleForTesting internal val HEADER_TRANSITION_ID = R.id.header_transition
+        @VisibleForTesting
+        internal val LARGE_SCREEN_HEADER_TRANSITION_ID = R.id.large_screen_header_transition
+        @VisibleForTesting internal val QQS_HEADER_CONSTRAINT = R.id.qqs_header_constraint
+        @VisibleForTesting internal val QS_HEADER_CONSTRAINT = R.id.qs_header_constraint
+        @VisibleForTesting
+        internal val LARGE_SCREEN_HEADER_CONSTRAINT = R.id.large_screen_header_constraint
 
-    @Mock(answer = Answers.RETURNS_MOCKS) private lateinit var view: MotionLayout
-    @Mock private lateinit var statusIcons: StatusIconContainer
-    @Mock private lateinit var statusBarIconController: StatusBarIconController
-    @Mock private lateinit var iconManagerFactory: StatusBarIconController.TintedIconManager.Factory
-    @Mock private lateinit var iconManager: StatusBarIconController.TintedIconManager
-    @Mock private lateinit var qsCarrierGroupController: QSCarrierGroupController
-    @Mock private lateinit var qsCarrierGroupControllerBuilder: QSCarrierGroupController.Builder
-    @Mock private lateinit var clock: Clock
-    @Mock private lateinit var date: VariableDateView
-    @Mock private lateinit var carrierGroup: QSCarrierGroup
-    @Mock private lateinit var batteryMeterView: BatteryMeterView
-    @Mock private lateinit var batteryMeterViewController: BatteryMeterViewController
-    @Mock private lateinit var privacyIconsController: HeaderPrivacyIconsController
-    @Mock private lateinit var insetsProvider: StatusBarContentInsetsProvider
-    @Mock private lateinit var variableDateViewControllerFactory: VariableDateViewController.Factory
-    @Mock private lateinit var variableDateViewController: VariableDateViewController
-    @Mock private lateinit var dumpManager: DumpManager
-    @Mock
-    private lateinit var combinedShadeHeadersConstraintManager:
-        CombinedShadeHeadersConstraintManager
+        private fun Int.stateToString() =
+            when (this) {
+                QQS_HEADER_CONSTRAINT -> "QQS Header"
+                QS_HEADER_CONSTRAINT -> "QS Header"
+                LARGE_SCREEN_HEADER_CONSTRAINT -> "Large Screen Header"
+                else -> "Unknown state $this"
+            }
+    }
 
-    @Mock private lateinit var mockedContext: Context
-    private lateinit var viewContext: Context
-
-    @Mock private lateinit var qqsConstraints: ConstraintSet
-    @Mock private lateinit var qsConstraints: ConstraintSet
-    @Mock private lateinit var largeScreenConstraints: ConstraintSet
-
-    @Mock private lateinit var demoModeController: DemoModeController
-    @Mock private lateinit var qsBatteryModeController: QsBatteryModeController
-
-    @JvmField @Rule val mockitoRule = MockitoJUnit.rule()
-    var viewVisibility = View.GONE
-    var viewAlpha = 1f
-
-    private lateinit var shadeHeaderController: ShadeHeaderController
+    private lateinit var iconManager: StatusBarIconController.TintedIconManager
     private lateinit var carrierIconSlots: List<String>
-    private val configurationController = FakeConfigurationController()
-    @Captor private lateinit var demoModeControllerCapture: ArgumentCaptor<DemoMode>
+    private lateinit var qsCarrierGroupController: QSCarrierGroupController
 
-    @Before
-    fun setup() {
-        whenever<Clock>(view.findViewById(R.id.clock)).thenReturn(clock)
-        whenever(clock.context).thenReturn(mockedContext)
+    private val batteryIcon: BatteryMeterView = header.findViewById(R.id.batteryRemainingIcon)
+    private val clock: Clock = header.findViewById(R.id.clock)
+    private val date: TextView = header.findViewById(R.id.date)
+    private val iconContainer: StatusIconContainer = header.findViewById(R.id.statusIcons)
+    private val qsCarrierGroup: QSCarrierGroup = header.findViewById(R.id.carrier_group)
 
-        whenever<TextView>(view.findViewById(R.id.date)).thenReturn(date)
-        whenever(date.context).thenReturn(mockedContext)
+    private var roundedCorners = 0
+    private var cutout: DisplayCutout? = null
+    private var lastInsets: WindowInsets? = null
 
-        whenever<QSCarrierGroup>(view.findViewById(R.id.carrier_group)).thenReturn(carrierGroup)
-
-        whenever<BatteryMeterView>(view.findViewById(R.id.batteryRemainingIcon))
-            .thenReturn(batteryMeterView)
-
-        whenever<StatusIconContainer>(view.findViewById(R.id.statusIcons)).thenReturn(statusIcons)
-
-        viewContext = Mockito.spy(context)
-        whenever(view.context).thenReturn(viewContext)
-        whenever(view.resources).thenReturn(context.resources)
-        whenever(statusIcons.context).thenReturn(context)
-        whenever(qsCarrierGroupControllerBuilder.setQSCarrierGroup(any()))
-            .thenReturn(qsCarrierGroupControllerBuilder)
-        whenever(qsCarrierGroupControllerBuilder.build()).thenReturn(qsCarrierGroupController)
-        whenever(view.setVisibility(anyInt())).then {
-            viewVisibility = it.arguments[0] as Int
-            null
+    private var qsDisabled = false
+    private var visible = false
+        set(value) {
+            if (field == value) {
+                return
+            }
+            field = value
+            updateListeners()
         }
         whenever(view.visibility).thenAnswer { _ -> viewVisibility }
 
@@ -226,8 +208,32 @@ class ShadeHeaderControllerTest : SysuiTestCase() {
 
         makeShadeVisible()
 
-        verify(statusIcons).addIgnoredSlots(carrierIconSlots)
-    }
+    private val configurationControllerListener =
+        object : ConfigurationController.ConfigurationListener {
+            override fun onConfigChanged(newConfig: Configuration?) {
+                val left =
+                    header.resources.getDimensionPixelSize(
+                        R.dimen.large_screen_shade_header_left_padding
+                    )
+                header.setPadding(
+                    left,
+                    header.paddingTop,
+                    header.paddingRight,
+                    header.paddingBottom
+                )
+            }
+
+            override fun onDensityOrFontScaleChanged() {
+                clock.setTextAppearance(R.style.TextAppearance_QS_Status)
+                date.setTextAppearance(R.style.TextAppearance_QS_Status)
+                qsCarrierGroup.updateTextAppearance(R.style.TextAppearance_QS_Status_Carriers)
+                loadConstraints()
+                header.minHeight =
+                    resources.getDimensionPixelSize(R.dimen.large_screen_shade_header_min_height)
+                lastInsets?.let { updateConstraintsForInsets(header, it) }
+                updateResources()
+            }
+        }
 
     @Test
     fun disableQS_notDisabled_visible() {
@@ -616,10 +622,67 @@ class ShadeHeaderControllerTest : SysuiTestCase() {
         verify(combinedShadeHeadersConstraintManager, Mockito.never())
             .centerCutoutConstraints(Mockito.anyBoolean(), anyInt())
 
-        verify(mockConstraintsChanges.qqsConstraintsChanges)!!.invoke(any())
-        verify(mockConstraintsChanges.qsConstraintsChanges)!!.invoke(any())
-        verify(mockConstraintsChanges.largeScreenConstraintsChanges)!!.invoke(any())
+        dumpManager.registerDumpable(this)
+        configurationController.addCallback(configurationControllerListener)
+        demoModeController.addCallback(demoModeReceiver)
+        statusBarIconController.addIconGroup(iconManager)
     }
+
+    override fun onViewDetached() {
+        privacyIconsController.chipVisibilityListener = null
+        dumpManager.unregisterDumpable(this::class.java.simpleName)
+        configurationController.removeCallback(configurationControllerListener)
+        demoModeController.removeCallback(demoModeReceiver)
+        statusBarIconController.removeIconGroup(iconManager)
+    }
+
+    fun disable(state1: Int, state2: Int, animate: Boolean) {
+        val disabled = state2 and StatusBarManager.DISABLE2_QUICK_SETTINGS != 0
+        if (disabled == qsDisabled) return
+        qsDisabled = disabled
+        updateVisibility()
+    }
+
+    fun startCustomizingAnimation(show: Boolean, duration: Long) {
+        header
+            .animate()
+            .setDuration(duration)
+            .alpha(if (show) 0f else 1f)
+            .setInterpolator(if (show) Interpolators.ALPHA_OUT else Interpolators.ALPHA_IN)
+            .setListener(CustomizerAnimationListener(show))
+            .start()
+    }
+
+    private fun loadConstraints() {
+        // Use resources.getXml instead of passing the resource id due to bug b/205018300
+        header
+            .getConstraintSet(QQS_HEADER_CONSTRAINT)
+            .load(context, resources.getXml(R.xml.qqs_header))
+        header
+            .getConstraintSet(QS_HEADER_CONSTRAINT)
+            .load(context, resources.getXml(R.xml.qs_header))
+        header
+            .getConstraintSet(LARGE_SCREEN_HEADER_CONSTRAINT)
+            .load(context, resources.getXml(R.xml.large_screen_shade_header))
+    }
+
+    private fun updateConstraintsForInsets(view: MotionLayout, insets: WindowInsets) {
+        val cutout = insets.displayCutout.also { this.cutout = it }
+
+        val sbInsets: Pair<Int, Int> = insetsProvider.getStatusBarContentInsetsForCurrentRotation()
+        val cutoutLeft = sbInsets.first
+        val cutoutRight = sbInsets.second
+        val hasCornerCutout: Boolean = insetsProvider.currentRotationHasCornerCutout()
+        updateQQSPaddings()
+        // Set these guides as the left/right limits for content that lives in the top row, using
+        // cutoutLeft and cutoutRight
+        var changes =
+            combinedShadeHeadersConstraintManager.edgesGuidelinesConstraints(
+                if (view.isLayoutRtl) cutoutRight else cutoutLeft,
+                header.paddingStart,
+                if (view.isLayoutRtl) cutoutLeft else cutoutRight,
+                header.paddingEnd
+            )
 
     @Test
     fun testEmptyCutout() {
@@ -794,36 +857,12 @@ class ShadeHeaderControllerTest : SysuiTestCase() {
         verify(clock).pivotY = height.toFloat() / 2
     }
 
-    @Test
-    fun onDensityOrFontScaleChanged_reloadConstraints() {
-        // After density or font scale change, constraints need to be reloaded to reflect new
-        // dimensions.
-        Mockito.reset(qqsConstraints)
-        Mockito.reset(qsConstraints)
-        Mockito.reset(largeScreenConstraints)
-
-        configurationController.notifyDensityOrFontScaleChanged()
-
-        val captor = ArgumentCaptor.forClass(XmlResourceParser::class.java)
-        verify(qqsConstraints).load(eq(viewContext), capture(captor))
-        assertThat(captor.value.getResId()).isEqualTo(R.xml.qqs_header)
-        verify(qsConstraints).load(eq(viewContext), capture(captor))
-        assertThat(captor.value.getResId()).isEqualTo(R.xml.qs_header)
-        verify(largeScreenConstraints).load(eq(viewContext), capture(captor))
-        assertThat(captor.value.getResId()).isEqualTo(R.xml.large_screen_shade_header)
-    }
-
-    @Test
-    fun `carrier left padding is set when clock layout changes`() {
-        val width = 200
-        whenever(clock.width).thenReturn(width)
-        whenever(clock.scaleX).thenReturn(2.57f) // 2.57 comes from qs_header.xml
-        val captor = ArgumentCaptor.forClass(View.OnLayoutChangeListener::class.java)
-
-        verify(clock).addOnLayoutChangeListener(capture(captor))
-        captor.value.onLayoutChange(clock, 0, 0, width, 0, 0, 0, 0, 0)
-
-        verify(carrierGroup).setPaddingRelative(514, 0, 0, 0)
+    private fun updateResources() {
+        roundedCorners = resources.getDimensionPixelSize(R.dimen.rounded_corner_content_padding)
+        val padding = resources.getDimensionPixelSize(R.dimen.qs_panel_padding)
+        header.setPadding(padding, header.paddingTop, padding, header.paddingBottom)
+        updateQQSPaddings()
+        qsBatteryModeController.updateResources()
     }
 
     private fun View.executeLayoutChange(

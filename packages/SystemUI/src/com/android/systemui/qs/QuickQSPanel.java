@@ -38,7 +38,6 @@ public class QuickQSPanel extends QSPanel {
     // A fallback value for max tiles number when setting via Tuner (parseNumTiles)
     public static final int TUNER_MAX_TILES_FALLBACK = 6;
 
-    private QSLogger mQsLogger;
     // Tile Columns on normal conditions
     public int mMaxColumnsPortrait = 5;
     public int mMaxColumnsLandscape = 6;
