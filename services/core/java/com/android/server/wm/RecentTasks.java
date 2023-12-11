@@ -80,8 +80,6 @@ import com.android.server.am.ActivityManagerService;
 
 import com.google.android.collect.Sets;
 
-import ink.kaleidoscope.server.ParallelSpaceManagerService;
-
 import java.io.File;
 import java.io.PrintWriter;
 import java.util.ArrayList;
@@ -879,7 +877,6 @@ class RecentTasks {
         for (int i = 0; i < profileIds.length; i++) {
             userIds.add(Integer.valueOf(profileIds[i]));
         }
-        userIds.addAll(ParallelSpaceManagerService.getCurrentParallelUserIds());
         return userIds;
     }
 

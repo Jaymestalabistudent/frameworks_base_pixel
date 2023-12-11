@@ -101,8 +101,6 @@ import com.android.server.SystemService;
 import com.android.server.pm.parsing.pkg.AndroidPackage;
 import com.android.server.wm.ActivityTaskManagerInternal;
 
-import ink.kaleidoscope.server.ParallelSpaceManagerService;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -1386,8 +1384,7 @@ public class LauncherAppsService extends SystemService {
         private boolean isEnabledProfileOf(UserHandle listeningUser, UserHandle user,
                 String debugMsg) {
             return mUserManagerInternal.isProfileAccessible(listeningUser.getIdentifier(),
-                    user.getIdentifier(), debugMsg, false) ||
-                    ParallelSpaceManagerService.isCurrentParallelUser(user.getIdentifier());
+                    user.getIdentifier(), debugMsg, false);
         }
 
         /** Returns whether or not the result to the listener should be filtered. */

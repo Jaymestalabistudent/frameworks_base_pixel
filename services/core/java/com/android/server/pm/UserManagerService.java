@@ -137,8 +137,6 @@ import libcore.io.IoUtils;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 
-import ink.kaleidoscope.server.ParallelSpaceManagerService;
-
 import java.io.File;
 import java.io.FileDescriptor;
 import java.io.FileInputStream;
@@ -198,7 +196,6 @@ public class UserManagerService extends IUserManager.Stub {
     private static final String ATTR_PROFILE_GROUP_ID = "profileGroupId";
     private static final String ATTR_PROFILE_BADGE = "profileBadge";
     private static final String ATTR_RESTRICTED_PROFILE_PARENT_ID = "restrictedProfileParentId";
-    private static final String ATTR_PARALLEL_PARENT_ID = "parallelParentId";
     private static final String ATTR_SEED_ACCOUNT_NAME = "seedAccountName";
     private static final String ATTR_SEED_ACCOUNT_TYPE = "seedAccountType";
     private static final String TAG_GUEST_RESTRICTIONS = "guestRestrictions";
@@ -1596,8 +1593,7 @@ public class UserManagerService extends IUserManager.Stub {
                 "isMediaSharedWithParent");
         synchronized (mUsersLock) {
             UserTypeDetails userTypeDetails = getUserTypeDetailsNoChecks(userId);
-            return userTypeDetails != null ?
-                    (userTypeDetails.isProfile() || userTypeDetails.isParallel())
+            return userTypeDetails != null ? userTypeDetails.isProfile()
                     && userTypeDetails.isMediaSharedWithParent() : false;
         }
     }
@@ -1708,8 +1704,6 @@ public class UserManagerService extends IUserManager.Stub {
         if (hasManageUsersPermission()) {
             return;
         }
-        if (ParallelSpaceManagerService.canInteract(callingUserId, userId))
-            return;
         if (hasPermissionGranted(Manifest.permission.INTERACT_ACROSS_USERS,
                 Binder.getCallingUid())) {
             return;
@@ -2757,8 +2751,7 @@ public class UserManagerService extends IUserManager.Stub {
         // Skip over users being removed
         for (int i = 0; i < totalUserCount; i++) {
             UserInfo user = mUsers.valueAt(i).info;
-            if (!mRemovingUserIds.get(user.id) && !user.isGuest() && !user.preCreated &&
-                    !user.isParallel()) {
+            if (!mRemovingUserIds.get(user.id) && !user.isGuest() && !user.preCreated) {
                 aliveUserCount++;
             }
         }
@@ -3518,9 +3511,6 @@ public class UserManagerService extends IUserManager.Stub {
             serializer.attributeInt(null, ATTR_RESTRICTED_PROFILE_PARENT_ID,
                     userInfo.restrictedProfileParentId);
         }
-        if (userInfo.parallelParentId != UserHandle.USER_NULL) {
-            serializer.attributeInt(null, ATTR_PARALLEL_PARENT_ID, userInfo.parallelParentId);
-        }
         // Write seed data
         if (userData.persistSeedData) {
             if (userData.seedAccountName != null) {
@@ -3677,7 +3667,6 @@ public class UserManagerService extends IUserManager.Stub {
         RestrictionsSet localRestrictions = null;
         Bundle globalRestrictions = null;
         boolean ignorePrepareStorageErrors = true; // default is true for old users
-        int parallelParentId = UserHandle.USER_NULL;
 
         final TypedXmlPullParser parser = Xml.resolvePullParser(is);
         int type;
@@ -3715,8 +3704,6 @@ public class UserManagerService extends IUserManager.Stub {
             preCreated = parser.getAttributeBoolean(null, ATTR_PRE_CREATED, false);
             converted = parser.getAttributeBoolean(null, ATTR_CONVERTED_FROM_PRE_CREATED, false);
             guestToRemove = parser.getAttributeBoolean(null, ATTR_GUEST_TO_REMOVE, false);
-            parallelParentId = parser.getAttributeInt(null, ATTR_PARALLEL_PARENT_ID,
-                    UserHandle.USER_NULL);
 
             seedAccountName = parser.getAttributeValue(null, ATTR_SEED_ACCOUNT_NAME);
             seedAccountType = parser.getAttributeValue(null, ATTR_SEED_ACCOUNT_TYPE);
@@ -3780,7 +3767,6 @@ public class UserManagerService extends IUserManager.Stub {
         userInfo.profileGroupId = profileGroupId;
         userInfo.profileBadge = profileBadge;
         userInfo.restrictedProfileParentId = restrictedProfileParentId;
-        userInfo.parallelParentId = parallelParentId;
 
         // Create the UserData object that's internal to this class
         UserData userData = new UserData();
@@ -4031,7 +4017,6 @@ public class UserManagerService extends IUserManager.Stub {
         final boolean isRestricted = UserManager.isUserTypeRestricted(userType);
         final boolean isDemo = UserManager.isUserTypeDemo(userType);
         final boolean isManagedProfile = UserManager.isUserTypeManagedProfile(userType);
-        final boolean isParallel = userTypeDetails.isParallel();
 
         final long ident = Binder.clearCallingIdentity();
         UserInfo userInfo;
@@ -4056,7 +4041,7 @@ public class UserManagerService extends IUserManager.Stub {
                             UserManager.USER_OPERATION_ERROR_MAX_USERS);
                 }
                 // Keep logic in sync with getRemainingCreatableUserCount()
-                if (!isGuest && !isManagedProfile && !isDemo && !isParallel && isUserLimitReached()) {
+                if (!isGuest && !isManagedProfile && !isDemo && isUserLimitReached()) {
                     // If the user limit has been reached, we cannot add a user (except guest/demo).
                     // Note that managed profiles can bypass it in certain circumstances (taken
                     // into account in the profile check below).
@@ -4091,11 +4076,6 @@ public class UserManagerService extends IUserManager.Stub {
                                         + parentId,
                                 UserManager.USER_OPERATION_ERROR_UNKNOWN);
                     }
-                }
-                if (isParallel && parent == null) {
-                    throwCheckedUserOperationException(
-                            "Parallel space must have a parent",
-                            UserManager.USER_OPERATION_ERROR_UNKNOWN);
                 }
 
                 userId = getNextAvailableId();
@@ -4147,8 +4127,6 @@ public class UserManagerService extends IUserManager.Stub {
                             writeUserLP(parent);
                         }
                         userInfo.restrictedProfileParentId = parent.info.restrictedProfileParentId;
-                    } else if (isParallel) {
-                        userInfo.parallelParentId = parent.info.id;
                     }
                 }
             }
@@ -4416,7 +4394,7 @@ public class UserManagerService extends IUserManager.Stub {
         MetricsLogger.count(mContext, userInfo.isGuest() ? TRON_GUEST_CREATED
                 : (userInfo.isDemo() ? TRON_DEMO_CREATED : TRON_USER_CREATED), 1);
 
-        if (!userInfo.isProfile() && !userInfo.isParallel()) {
+        if (!userInfo.isProfile()) {
             // If the user switch hasn't been explicitly toggled on or off by the user, turn it on.
             if (android.provider.Settings.Global.getString(mContext.getContentResolver(),
                     android.provider.Settings.Global.USER_SWITCHER_ENABLED) == null) {
@@ -5740,7 +5718,6 @@ public class UserManagerService extends IUserManager.Stub {
                     final UserInfo user = users.get(i);
                     final boolean running = am.isUserRunning(user.id, 0);
                     final boolean current = user.id == currentUser;
-                    final boolean isParallel = user.isParallel();
                     final boolean hasParent = user.profileGroupId != user.id
                             && user.profileGroupId != UserInfo.NO_PROFILE_GROUP_ID;
                     if (verbose) {
@@ -5768,7 +5745,6 @@ public class UserManagerService extends IUserManager.Stub {
                                 user.userType.replace("android.os.usertype.", ""),
                                 UserInfo.flagsToString(user.flags),
                                 hasParent ? " (parentId=" + user.profileGroupId + ")" : "",
-                                isParallel ? " (parallelParentId=" + user.parallelParentId + ")" : "",
                                 running ? " (running)" : "",
                                 user.partial ? " (partial)" : "",
                                 user.preCreated ? " (pre-created)" : "",
@@ -6338,9 +6314,6 @@ public class UserManagerService extends IUserManager.Stub {
             if (targetUserId == callingUserId) {
                 return true;
             }
-            if (ParallelSpaceManagerService.canInteract(callingUserId, targetUserId)) {
-                return true;
-            }
             synchronized (mUsersLock) {
                 UserInfo callingUserInfo = getUserInfoLU(callingUserId);
                 if (callingUserInfo == null || callingUserInfo.isProfile()) {
@@ -6536,7 +6509,7 @@ public class UserManagerService extends IUserManager.Stub {
             UserInfo ui = mUsers.valueAt(i).info;
             // Check which badge indexes are already used by this profile group.
             if (ui.userType.equals(userType)
-                    && (ui.profileGroupId == parentUserId || ui.parallelParentId == parentUserId)
+                    && ui.profileGroupId == parentUserId
                     && !mRemovingUserIds.get(ui.id)) {
                 usedBadges.add(ui.profileBadge);
             }
