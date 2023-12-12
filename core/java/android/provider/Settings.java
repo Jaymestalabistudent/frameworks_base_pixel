@@ -6233,6 +6233,11 @@ public final class Settings {
          */
         public static final String QQS_LAYOUT = "qqs_layout";
         /**
+         * @hide
+         */
+        public static final String QS_UI_STYLE = "qs_ui_style";
+
+        /**
          * These are all public system settings
          *
          * @hide
@@ -11712,6 +11717,12 @@ public final class Settings {
         public static final String LOCKSCREEN_MEDIA_METADATA = "lockscreen_media_metadata";
 
         /**
+         * Whether to turn on black theme
+         * @hide
+         */
+        public static final String SYSTEM_BLACK_THEME = "system_black_theme";
+
+        /**
          * Keys we no longer back up under the current schema, but want to continue to
          * process when restoring historical backup datasets.
          *
@@ -11933,6 +11944,12 @@ public final class Settings {
          * @hide
          */
         public static final String LOCK_SCREEN_WEATHER_ENABLED = "lockscreen_weather_enabled";
+
+	/**
+         * Quicksettings tile shape
+         * @hide
+         */
+        public static final String QS_TILE_SHAPE = "qs_tile_shape";
 
         /**
          * Enable udfps detection even when screen is off
