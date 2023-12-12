@@ -180,7 +180,6 @@ public class QSFragment extends LifecycleFragment implements QS, CommandQueue.Ca
 
     private final TunerService mTunerService;
     
-    private float mCustomAlpha = 1f;
 
     @Inject
     public QSFragment(RemoteInputQuickSettingsDisabler remoteInputQsDisabler,
