@@ -6322,14 +6322,6 @@ public final class Settings {
          * @hide
          */
         public static final String QQS_LAYOUT = "qqs_layout";
-
-     
-        /**
-         * QS Header
-         * @hide
-         */
-        public static final String QS_HEADER_IMAGE = "qs_header_image";
-
         /**
          * These are all public system settings
          *
