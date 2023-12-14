@@ -6211,9 +6211,7 @@ public final class Settings {
         public static final String SMART_5G = "smart_5g";
         
         /**
-         * QS Header image
-         * format = "qs_header_image_" + QS_HEADER_IMAGE
-         * values 0 and -1 are reserved to mark disabled state (0) and custom user image (-1)
+         * QS Header
          * @hide
          */
         public static final String QS_HEADER_IMAGE = "qs_header_image";
@@ -6492,16 +6490,6 @@ public final class Settings {
             PRIVATE_SETTINGS.add(ADAPTIVE_PLAYBACK_ENABLED);
             PRIVATE_SETTINGS.add(ADAPTIVE_PLAYBACK_TIMEOUT);
             PRIVATE_SETTINGS.add(SENSOR_BLOCK);
-            PRIVATE_SETTINGS.add(QS_HEADER_IMAGE);
-            PRIVATE_SETTINGS.add(QS_HEADER_IMAGE_TINT);
-            PRIVATE_SETTINGS.add(QS_HEADER_IMAGE_TINT_CUSTOM);
-            PRIVATE_SETTINGS.add(QS_HEADER_IMAGE_ALPHA);
-            PRIVATE_SETTINGS.add(QS_HEADER_IMAGE_HEIGHT_PORTRAIT);
-            PRIVATE_SETTINGS.add(QS_HEADER_IMAGE_HEIGHT_LANDSCAPE);
-            PRIVATE_SETTINGS.add(QS_HEADER_IMAGE_LANDSCAPE_ENABLED);
-            PRIVATE_SETTINGS.add(QS_HEADER_IMAGE_PADDING_SIDE);
-            PRIVATE_SETTINGS.add(QS_HEADER_IMAGE_PADDING_TOP);
-            PRIVATE_SETTINGS.add(QS_HEADER_IMAGE_URI);
         }
         /**
          * These entries are considered common between the personal and the managed profile,
