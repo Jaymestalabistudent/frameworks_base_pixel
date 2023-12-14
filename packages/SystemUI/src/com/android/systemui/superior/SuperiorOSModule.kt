@@ -16,6 +16,8 @@
 
 package com.android.systemui.superior
 
+import com.android.systemui.qs.tileimpl.QSTileImpl
+
 import com.android.systemui.qs.tiles.OnTheGoTile
 
 
