@@ -48,7 +48,6 @@ import com.android.systemui.qs.SettingObserver;
 import com.android.systemui.qs.logging.QSLogger;
 import com.android.systemui.qs.tileimpl.QSTileImpl;
 import com.android.systemui.statusbar.policy.BatteryController;
-import com.android.systemui.statusbar.policy.KeyguardStateController;
 import com.android.systemui.statusbar.policy.RotationLockController;
 import com.android.systemui.statusbar.policy.RotationLockController.RotationLockControllerCallback;
 import com.android.systemui.util.settings.SecureSettings;
@@ -56,7 +55,8 @@ import com.android.systemui.util.settings.SecureSettings;
 import javax.inject.Inject;
 
 /** Quick settings tile: Rotation **/
-public class RotationLockTile extends SecureQSTile<BooleanState> {
+public class RotationLockTile extends QSTileImpl<BooleanState> implements
+        BatteryController.BatteryStateChangeCallback {
 
     public static final String TILE_SPEC = "rotation";
 
@@ -82,10 +82,9 @@ public class RotationLockTile extends SecureQSTile<BooleanState> {
             SensorPrivacyManager privacyManager,
             BatteryController batteryController,
             SecureSettings secureSettings
-            KeyguardStateController keyguardStateController
     ) {
         super(host, backgroundLooper, mainHandler, falsingManager, metricsLogger,
-                statusBarStateController, activityStarter, qsLogger, keyguardStateController);
+                statusBarStateController, activityStarter, qsLogger);
         mController = rotationLockController;
         mController.observe(this, mCallback);
         mPrivacyManager = privacyManager;
@@ -127,11 +126,7 @@ public class RotationLockTile extends SecureQSTile<BooleanState> {
     }
 
     @Override
-    protected void handleClick(@Nullable View view, boolean keyguardShowing) {
-        if (checkKeyguard(view, keyguardShowing)) {
-            return;
-        }
-
+    protected void handleClick(@Nullable View view) {
         final boolean newState = !mState.value;
         mController.setRotationLocked(!newState);
         refreshState(newState);

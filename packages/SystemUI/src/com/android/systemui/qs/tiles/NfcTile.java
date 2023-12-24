@@ -45,12 +45,11 @@ import com.android.systemui.plugins.statusbar.StatusBarStateController;
 import com.android.systemui.qs.QSHost;
 import com.android.systemui.qs.logging.QSLogger;
 import com.android.systemui.qs.tileimpl.QSTileImpl;
-import com.android.systemui.statusbar.policy.KeyguardStateController;
 
 import javax.inject.Inject;
 
 /** Quick settings tile: Enable/Disable NFC **/
-public class NfcTile extends SecureQSTile<BooleanState> {
+public class NfcTile extends QSTileImpl<BooleanState> {
 
     public static final String TILE_SPEC = "nfc";
 
@@ -73,11 +72,10 @@ public class NfcTile extends SecureQSTile<BooleanState> {
             StatusBarStateController statusBarStateController,
             ActivityStarter activityStarter,
             QSLogger qsLogger,
-            BroadcastDispatcher broadcastDispatcher,
-            KeyguardStateController keyguardStateController
+            BroadcastDispatcher broadcastDispatcher
     ) {
         super(host, backgroundLooper, mainHandler, falsingManager, metricsLogger,
-                statusBarStateController, activityStarter, qsLogger, keyguardStateController);
+                statusBarStateController, activityStarter, qsLogger);
         mBroadcastDispatcher = broadcastDispatcher;
     }
 
@@ -120,11 +118,7 @@ public class NfcTile extends SecureQSTile<BooleanState> {
     }
 
     @Override
-    protected void handleClick(@Nullable View view, boolean keyguardShowing) {
-        if (checkKeyguard(view, keyguardShowing)) {
-            return;
-        }
-
+    protected void handleClick(@Nullable View view) {
         if (getAdapter() == null) {
             return;
         }
