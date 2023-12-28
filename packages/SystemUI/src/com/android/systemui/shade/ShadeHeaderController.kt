@@ -31,18 +31,6 @@ import android.view.DisplayCutout
 import android.view.View
 import android.view.WindowInsets
 import android.widget.TextView
-
-import android.widget.*
-import android.graphics.drawable.*
-import android.os.Handler
-import android.bluetooth.BluetoothManager
-
-import com.android.systemui.qs.tiles.dialog.BluetoothDialogFactory
-import com.android.systemui.qs.tiles.dialog.InternetDialogFactory
-import com.android.systemui.statusbar.connectivity.AccessPointController
-import android.net.*
-import android.util.TypedValue
-
 import androidx.annotation.VisibleForTesting
 import androidx.constraintlayout.motion.widget.MotionLayout
 import com.android.settingslib.Utils
@@ -106,12 +94,8 @@ constructor(
     private val combinedShadeHeadersConstraintManager: CombinedShadeHeadersConstraintManager,
     private val demoModeController: DemoModeController,
     private val qsBatteryModeController: QsBatteryModeController,
-    private val activityStarter: ActivityStarter,
-    private val featureFlags: FeatureFlags,
-    private val accessPointController: AccessPointController,
-    private val bluetoothDialogFactory: BluetoothDialogFactory,
-    private val internetDialogFactory: InternetDialogFactory,
-) : ViewController<View>(header), Dumpable, View.OnClickListener, View.OnLongClickListener {
+    private val activityStarter: ActivityStarter
+) : ViewController<View>(header), Dumpable {
 
     companion object {
         /** IDs for transitions and constraints for the [MotionLayout]. */
@@ -132,31 +116,10 @@ constructor(
             }
     }
 
-    private var qsBatteryPercent = Settings.System.getIntForUser(
-             context.contentResolver, Settings.System.QS_SHOW_BATTERY_PERCENT, 2, UserHandle.USER_CURRENT)
-    private var batteryStyle = Settings.System.getIntForUser(
-             context.contentResolver, Settings.System.STATUS_BAR_BATTERY_STYLE, 0, UserHandle.USER_CURRENT)
-    private var qsBatteryStyle = Settings.System.getIntForUser(
-             context.contentResolver, Settings.System.QS_BATTERY_STYLE, -1, UserHandle.USER_CURRENT)
-    
-    private val mBluetoothIcon: ImageView = header.findViewById(R.id.afl_icon_bt)
-    private val mBluetoothText: TextView = header.findViewById(R.id.afl_text_bt)
-    private val mBtChevron: ImageView = header.findViewById(R.id.bt_chevron)
-
-    private val mInternetIcon: ImageView = header.findViewById(R.id.afl_qs_internet_icon)
-    private val mInternetText: TextView = header.findViewById(R.id.afl_qs_internet_text)
-    private val mInternetChevron: ImageView = header.findViewById(R.id.inet_chevron)
-
-    private val btTile: LinearLayout = header.findViewById(R.id.afl_bt)
-    private val inetTile: LinearLayout = header.findViewById(R.id.afl_inet)
-
     private lateinit var iconManager: StatusBarIconController.TintedIconManager
     private lateinit var carrierIconSlots: List<String>
     private lateinit var qsCarrierGroupController: QSCarrierGroupController
 
-    private lateinit var ripple: RippleDrawable
-    private lateinit var colorBackgroundDrawable: Drawable
-    
     private val batteryIcon: BatteryMeterView = header.findViewById(R.id.batteryRemainingIcon)
     private val clock: Clock = header.findViewById(R.id.clock)
     private val date: TextView = header.findViewById(R.id.date)
@@ -166,9 +129,7 @@ constructor(
     private var roundedCorners = 0
     private var cutout: DisplayCutout? = null
     private var lastInsets: WindowInsets? = null
-    private var textColorPrimary = Color.TRANSPARENT
-    
-    private var privacyChipVisible = false
+
     private var qsDisabled = false
     private var visible = false
         set(value) {
@@ -239,7 +200,7 @@ constructor(
                 updateScrollY()
             }
         }
-    
+
     private val insetListener =
         View.OnApplyWindowInsetsListener { view, insets ->
             updateConstraintsForInsets(view as MotionLayout, insets)
@@ -289,25 +250,18 @@ constructor(
                 qsCarrierGroup.updateTextAppearance(R.style.TextAppearance_QS_Status_Carriers)
                 loadConstraints()
                 header.minHeight =
-                    resources.getDimensionPixelSize(R.dimen.large_screen_shade_header_min_height)*3
+                    resources.getDimensionPixelSize(R.dimen.large_screen_shade_header_min_height)
                 lastInsets?.let { updateConstraintsForInsets(header, it) }
                 updateResources()
-                updateBluetoothTile()
-                updateInternetTile()
             }
-
-        override fun onUiModeChanged() {
-            updateResources()
-            updateBluetoothTile()
-            updateInternetTile()
         }
 
     override fun onInit() {
         variableDateViewControllerFactory.create(date as VariableDateView).init()
         batteryMeterViewController.init()
-        updateQsBatteryStyle()
-        updateBluetoothTile()
-        updateInternetTile()
+
+        // battery settings same as in QS icons
+        batteryMeterViewController.ignoreTunerUpdates()
 
         iconManager = tintedIconManagerFactory.create(iconContainer, StatusBarLocation.QS)
         iconManager.setTint(
@@ -321,60 +275,16 @@ constructor(
 
         privacyIconsController.onParentVisible()
 
-        // click actions
-        clock.setOnClickListener(this)
-        clock.setOnLongClickListener(this)
-        
-        date.setOnClickListener(this)
-        date.setOnLongClickListener(this)
-        setBatteryClickable(true)
-
-        btTile.setOnClickListener(this)
-        btTile.setOnLongClickListener(this)
-        
-        inetTile.setOnClickListener(this)
-        inetTile.setOnLongClickListener(this)
-    }
-
-    override fun onClick(v: View) {
-        if (v == clock) {
-            activityStarter.postStartActivityDismissingKeyguard(Intent(
-                    AlarmClock.ACTION_SHOW_ALARMS), 0)
-        } else if (v == date) {
-            val builder: Uri.Builder = CalendarContract.CONTENT_URI.buildUpon()
-            builder.appendPath("time")
-            builder.appendPath(System.currentTimeMillis().toString())
-            val todayIntent: Intent = Intent(Intent.ACTION_VIEW, builder.build())
-            activityStarter.postStartActivityDismissingKeyguard(todayIntent, 0)
-        } else if (v == batteryIcon) {
-            activityStarter.postStartActivityDismissingKeyguard(Intent(
-                    Intent.ACTION_POWER_USAGE_SUMMARY), 0)
-        } else if ( v == btTile) {
-        	Handler().post({
-                bluetoothDialogFactory.create(true, v)})
-        } else if ( v == inetTile ) {
-    	    Handler().post({
-                internetDialogFactory.create(true,
-                accessPointController.canConfigMobileData(),
-                accessPointController.canConfigWifi(), v)})
+        clock.setOnClickListener {
+            activityStarter.postStartActivityDismissingKeyguard(
+                Intent(AlarmClock.ACTION_SHOW_ALARMS), 0
+            )
         }
 
-    override fun onLongClick(v: View?): Boolean {
-        if (v == clock || v == date) {
-            val nIntent: Intent = Intent(Intent.ACTION_MAIN)
-            nIntent.setClassName("com.android.settings",
-                    "com.android.settings.Settings\$DateTimeSettingsActivity")
-            activityStarter.startActivity(nIntent, true /* dismissShade */)
-            vibrator.vibrate(VibrationEffect.createOneShot(50, VibrationEffect.DEFAULT_AMPLITUDE))
-           return true
-        } else if ( v == btTile) {
-        	activityStarter.postStartActivityDismissingKeyguard(Intent(
-                Settings.ACTION_BLUETOOTH_SETTINGS), 0)
-            return true
-        } else if ( v == inetTile) {
-        	activityStarter.postStartActivityDismissingKeyguard(Intent(
-                Settings.ACTION_WIFI_SETTINGS), 0)
-            return true
+        batteryIcon.setOnClickListener {
+            activityStarter.postStartActivityDismissingKeyguard(
+                Intent(Intent.ACTION_POWER_USAGE_SUMMARY), 0
+            )
         }
     }
 
@@ -386,7 +296,7 @@ constructor(
         header.setOnApplyWindowInsetsListener(insetListener)
 
         clock.addOnLayoutChangeListener { v, _, _, _, _, _, _, _, _ ->
-            val newPivot = if (v.isLayoutRtl) v.width.toFloat() else v.width.toFloat() / 2
+            val newPivot = if (v.isLayoutRtl) v.width.toFloat() else 0f
             v.pivotX = newPivot
             v.pivotY = v.height.toFloat() / 2
 
@@ -397,9 +307,6 @@ constructor(
         configurationController.addCallback(configurationControllerListener)
         demoModeController.addCallback(demoModeReceiver)
         statusBarIconController.addIconGroup(iconManager)
-        updateResources()
-        updateBluetoothTile()
-        updateInternetTile()
     }
 
     override fun onViewDetached() {
@@ -408,8 +315,6 @@ constructor(
         configurationController.removeCallback(configurationControllerListener)
         demoModeController.removeCallback(demoModeReceiver)
         statusBarIconController.removeIconGroup(iconManager)
-        updateBluetoothTile()
-        updateInternetTile()
     }
 
     fun disable(state1: Int, state2: Int, animate: Boolean) {
@@ -477,8 +382,6 @@ constructor(
 
         view.updateAllConstraints(changes)
         updateBatteryMode()
-        updateBluetoothTile()
-        updateInternetTile()
     }
 
     private fun updateBatteryMode() {
@@ -568,103 +471,6 @@ constructor(
             iconContainer.addIgnoredSlots(carrierIconSlots)
         }
     }
-    
-    private fun updateBluetoothTile() {
-        // Update Bluetooth tile (e.g., update enable/disable button)             
-        val colorActive = Utils.getColorAttrDefaultColor(context, android.R.attr.colorAccent)
-        val colorNonActive = Utils.getColorAttrDefaultColor(context, com.android.internal.R.attr.textColorPrimaryInverse)
-        val colorIconActive = Utils.getColorAttrDefaultColor(context, android.R.attr.colorPrimary);
-        val colorIconNonActive = Utils.getColorAttrDefaultColor(context, android.R.attr.textColorPrimary);
-    
-        btTile.background = createTileBackground()
-        if (isBluetoothAvailable(context)) {
-        	btTile.background.setTint(colorActive)
-            mBluetoothIcon.setColorFilter(colorIconActive)
-            mBluetoothText.setTextColor(colorIconActive)
-            mBtChevron.setColorFilter(colorIconActive)
-        } else {
-        	if (isDarkMode(context)) {
-            	val colorInactive = context.resources.getColor(android.R.color.system_neutral1_800)
-                btTile.background.setTint(colorInactive)
-            } else {
-            	val colorInactive = Utils.getColorAttrDefaultColor(context, com.android.internal.R.attr.colorSurface) 
-            btTile.background.setTint(colorInactive)
-            }
-        	
-            mBluetoothIcon.setColorFilter(colorIconNonActive)
-            mBluetoothText.setTextColor(colorIconNonActive)
-            mBtChevron.setColorFilter(colorIconNonActive)
-        }
-    }
-    
-    private fun updateInternetTile() {
-        // Update Bluetooth tile (e.g., update enable/disable button)
-        val colorActive = Utils.getColorAttrDefaultColor(context, android.R.attr.colorAccent)
-        val colorNonActive = Utils.getColorAttrDefaultColor(context, com.android.internal.R.attr.textColorPrimaryInverse)
-        val colorIconActive = Utils.getColorAttrDefaultColor(context, android.R.attr.colorPrimary);
-        val colorIconNonActive = Utils.getColorAttrDefaultColor(context, android.R.attr.textColorPrimary);
-    
-        inetTile.background = createTileBackground()
-        if (isNetworkAvailable(context)) {
-        	inetTile.background.setTint(colorActive)
-            mInternetIcon.setColorFilter(colorIconActive)
-            mInternetText.setTextColor(colorIconActive)
-            mInternetChevron.setColorFilter(colorIconActive)
-        } else {
-        	if (isDarkMode(context)) {
-            	val colorInactive = context.resources.getColor(android.R.color.system_neutral1_800)
-                inetTile.background.setTint(colorInactive)
-            } else {
-            	val colorInactive = Utils.getColorAttrDefaultColor(context, com.android.internal.R.attr.colorSurface) 
-                inetTile.background.setTint(colorInactive)
-            }
-        	
-            mInternetIcon.setColorFilter(colorIconNonActive)
-            mInternetText.setTextColor(colorIconNonActive)
-            mInternetChevron.setColorFilter(colorIconNonActive)
-        }
-    }
-    
-    fun createTileBackground(): Drawable {
-        ripple = context.getDrawable(R.drawable.afl_qs_tile_bg).mutate() as RippleDrawable
-        colorBackgroundDrawable = ripple.findDrawableByLayerId(R.id.background)
-        return ripple
-    }
-    
-    fun isDarkMode(context: Context): Boolean {
-        val darkModeFlag = context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK
-        return darkModeFlag == Configuration.UI_MODE_NIGHT_YES
-    }
-
-    fun isNetworkAvailable(context: Context?): Boolean {
-            if (context == null) return false
-            val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-            val capabilities = connectivityManager.getNetworkCapabilities(connectivityManager.activeNetwork)
-            if (capabilities != null) {
-                when {
-                    capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) -> {
-                        return true
-                    }
-                    capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) -> {
-                        return true
-                    }
-                    capabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET) -> {
-                        return true
-                    }
-                }
-            }
-            return false
-    }
-    
-    fun isBluetoothAvailable(context: Context?): Boolean {
-            if (context == null) return false
-            val bluetoothManager = context.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
-            val bluetoothAdapter = bluetoothManager.adapter
-            if (bluetoothAdapter?.isEnabled == true ) {
-            	return true
-            }
-            return false
-    }
 
     private fun updateResources() {
         roundedCorners = resources.getDimensionPixelSize(R.dimen.rounded_corner_content_padding)
@@ -672,26 +478,6 @@ constructor(
         header.setPadding(padding, header.paddingTop, padding, header.paddingBottom)
         updateQQSPaddings()
         qsBatteryModeController.updateResources()
-        updateQsBatteryStyle()
-        updateBluetoothTile()
-        updateInternetTile()
-
-        val fillColor = Utils.getColorAttrDefaultColor(context, android.R.attr.textColorPrimary)
-        iconManager.setTint(fillColor)
-        val textColor = Utils.getColorAttrDefaultColor(context, android.R.attr.textColorPrimary)
-        val colorStateList = Utils.getColorAttr(context, android.R.attr.textColorPrimary)
-        if (textColor != textColorPrimary) {
-            val textColorSecondary = Utils.getColorAttrDefaultColor(context,
-                    android.R.attr.textColorSecondary)
-            textColorPrimary = textColor
-            if (iconManager != null) {
-                iconManager.setTint(textColor)
-            }
-            clock.setTextColor(textColorPrimary)
-            date.setTextColor(textColorPrimary)
-            qsCarrierGroup.updateColors(textColorPrimary, colorStateList)
-            batteryIcon.updateColors(textColorPrimary, textColorSecondary, textColorPrimary)
-        }
     }
 
     private fun updateQQSPaddings() {
@@ -739,7 +525,7 @@ constructor(
             updateConstraints(LARGE_SCREEN_HEADER_CONSTRAINT, updates.largeScreenConstraintsChanges)
         }
     }
-    
+
     @VisibleForTesting internal fun simulateViewDetached() = this.onViewDetached()
 
     inner class CustomizerAnimationListener(
