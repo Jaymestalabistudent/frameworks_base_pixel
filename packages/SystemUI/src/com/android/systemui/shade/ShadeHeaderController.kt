@@ -20,23 +20,14 @@ import android.animation.Animator
 import android.animation.AnimatorListenerAdapter
 import android.annotation.IdRes
 import android.app.StatusBarManager
-import android.content.Context
 import android.content.Intent
-import android.net.Uri
-import android.content.res.ColorStateList
 import android.content.res.Configuration
-import android.graphics.Color
 import android.os.Bundle
 import android.os.Trace
 import android.os.Trace.TRACE_TAG_APP
-import android.os.VibrationEffect
-import android.os.Vibrator
 import android.provider.AlarmClock
-import android.provider.CalendarContract
 import android.util.Pair
 import android.view.DisplayCutout
-import android.os.UserHandle;
-import android.provider.Settings
 import android.view.View
 import android.view.WindowInsets
 import android.widget.TextView
@@ -84,15 +75,10 @@ import com.android.systemui.statusbar.policy.Clock
 import com.android.systemui.statusbar.policy.ConfigurationController
 import com.android.systemui.statusbar.policy.VariableDateView
 import com.android.systemui.statusbar.policy.VariableDateViewController
-import com.android.systemui.tuner.TunerService
-import com.android.systemui.tuner.TunerService.Tunable
 import com.android.systemui.util.ViewController
 import java.io.PrintWriter
 import javax.inject.Inject
 import javax.inject.Named
-
-import com.android.systemui.flags.FeatureFlags
-import com.android.systemui.flags.Flags
 
 /**
  * Controller for QS header.
@@ -113,8 +99,6 @@ constructor(
     private val privacyIconsController: HeaderPrivacyIconsController,
     private val insetsProvider: StatusBarContentInsetsProvider,
     private val configurationController: ConfigurationController,
-    private val context: Context,
-    private val tunerService: TunerService,
     private val variableDateViewControllerFactory: VariableDateViewController.Factory,
     @Named(SHADE_HEADER) private val batteryMeterViewController: BatteryMeterViewController,
     private val dumpManager: DumpManager,
@@ -138,15 +122,6 @@ constructor(
         @VisibleForTesting internal val QS_HEADER_CONSTRAINT = R.id.qs_header_constraint
         @VisibleForTesting
         internal val LARGE_SCREEN_HEADER_CONSTRAINT = R.id.large_screen_header_constraint
-
-        internal val QS_BATTERY_STYLE =
-            "system:" + Settings.System.QS_BATTERY_STYLE
-
-        internal val STATUS_BAR_BATTERY_STYLE =
-            "system:" + Settings.System.STATUS_BAR_BATTERY_STYLE
-
-        internal val QS_SHOW_BATTERY_PERCENT =
-            "system:" + Settings.System.QS_SHOW_BATTERY_PERCENT
 
         private fun Int.stateToString() =
             when (this) {
@@ -187,7 +162,6 @@ constructor(
     private val date: TextView = header.findViewById(R.id.date)
     private val iconContainer: StatusIconContainer = header.findViewById(R.id.statusIcons)
     private val qsCarrierGroup: QSCarrierGroup = header.findViewById(R.id.carrier_group)
-    private val vibrator: Vibrator = header.context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
 
     private var roundedCorners = 0
     private var cutout: DisplayCutout? = null
@@ -245,7 +219,6 @@ constructor(
             if (qsVisible && field != value) {
                 header.alpha = ShadeInterpolation.getContentAlpha(value)
                 field = value
-                updateVisibility()
             }
         }
 
@@ -292,8 +265,6 @@ constructor(
                 val update =
                     combinedShadeHeadersConstraintManager.privacyChipVisibilityConstraints(visible)
                 header.updateAllConstraints(update)
-                privacyChipVisible = visible
-                setBatteryClickable(qsExpandedFraction == 1f || !visible)
             }
         }
 
@@ -330,34 +301,8 @@ constructor(
             updateBluetoothTile()
             updateInternetTile()
         }
-    }
-
-    fun updateQsBatteryStyle() {
-        if (qsBatteryStyle >= 0)  {
-            batteryIcon.setBatteryStyle(qsBatteryStyle)
-        } else {
-            batteryIcon.setBatteryStyle(batteryStyle)
-        }
-        batteryIcon.setBatteryPercent(qsBatteryPercent)
-    }
 
     override fun onInit() {
-        val tunable = Tunable { key: String?, value: String? ->
-            when (key) {
-                QS_SHOW_BATTERY_PERCENT ->
-                    qsBatteryPercent = TunerService.parseInteger(value, 1)
-                STATUS_BAR_BATTERY_STYLE ->
-                    batteryStyle = TunerService.parseInteger(value, 0)
-                QS_BATTERY_STYLE ->
-                    qsBatteryStyle = TunerService.parseInteger(value, -1)
-            }
-        }
-
-        tunerService.addTunable(tunable,
-                QS_BATTERY_STYLE,
-                STATUS_BAR_BATTERY_STYLE,
-                QS_SHOW_BATTERY_PERCENT)
-
         variableDateViewControllerFactory.create(date as VariableDateView).init()
         batteryMeterViewController.init()
         updateQsBatteryStyle()
@@ -369,15 +314,8 @@ constructor(
             Utils.getColorAttrDefaultColor(header.context, android.R.attr.textColorPrimary)
         )
 
-        carrierIconSlots = if (featureFlags.isEnabled(Flags.COMBINED_STATUS_BAR_SIGNAL_ICONS)) {
-            listOf(
-                header.context.getString(com.android.internal.R.string.status_bar_no_calling),
-                header.context.getString(com.android.internal.R.string.status_bar_call_strength)
-            )
-        } else {
-            
+        carrierIconSlots =
             listOf(header.context.getString(com.android.internal.R.string.status_bar_mobile))
-        }
         qsCarrierGroupController =
             qsCarrierGroupControllerBuilder.setQSCarrierGroup(qsCarrierGroup).build()
 
@@ -420,7 +358,6 @@ constructor(
                 accessPointController.canConfigMobileData(),
                 accessPointController.canConfigWifi(), v)})
         }
-    }
 
     override fun onLongClick(v: View?): Boolean {
         if (v == clock || v == date) {
@@ -439,7 +376,6 @@ constructor(
                 Settings.ACTION_WIFI_SETTINGS), 0)
             return true
         }
-        return false
     }
 
     override fun onViewAttached() {
@@ -549,7 +485,6 @@ constructor(
         qsBatteryModeController.getBatteryMode(cutout, qsExpandedFraction)?.let {
             batteryIcon.setPercentShowMode(it)
         }
-        updateQsBatteryStyle()
     }
 
     private fun updateScrollY() {
@@ -589,7 +524,6 @@ constructor(
             header.visibility = visibility
             visible = visibility == View.VISIBLE
         }
-        updateQsBatteryStyle()
     }
 
     private fun updateTransition() {
@@ -611,7 +545,6 @@ constructor(
             header.progress = qsExpandedFraction
             updateBatteryMode()
         }
-        setBatteryClickable(qsExpandedFraction == 1f || !privacyChipVisible)
     }
 
     private fun logInstantEvent(message: String) {
@@ -772,11 +705,6 @@ constructor(
             clockPaddingEnd,
             clock.paddingBottom
         )
-    }
-
-    private fun setBatteryClickable(clickable: Boolean) {
-        batteryIcon.setOnClickListener(if (clickable) this else null)
-        batteryIcon.setClickable(clickable)
     }
 
     override fun dump(pw: PrintWriter, args: Array<out String>) {
