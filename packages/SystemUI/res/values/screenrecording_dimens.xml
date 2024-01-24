@@ -17,4 +17,6 @@
 <resources>
     <!-- Screen Record -->
     <dimen name="screenrecord_dot_size">48dp</dimen>
+    <dimen name="custom_qs_panel_padding_top">136dp</dimen>
+    <dimen name="custom_notification_row_padding">16dp</dimen>
 </resources>

@@ -52,6 +52,50 @@ public class QuickQSPanel extends QSPanel {
         mHorizontalContentContainer.setClipChildren(false);
     }
 
+
+    @Override
+    public void setBrightnessView(@NonNull View view) {
+        if (mBrightnessView != null) {
+            removeView(mBrightnessView);
+        }
+        mBrightnessView = view;
+        mAutoBrightnessView = view.findViewById(R.id.brightness_icon);
+        setBrightnessViewMargin(mTop);
+        if (mBrightnessView != null) {
+            addView(mBrightnessView);
+        }
+    }
+
+    View getBrightnessView() {
+        return mBrightnessView;
+    }
+
+    private void setBrightnessViewMargin(boolean top) {
+        if (mBrightnessView != null) {
+            MarginLayoutParams lp = (MarginLayoutParams) mBrightnessView.getLayoutParams();
+            if (top) {
+                lp.topMargin = mContext.getResources()
+                        .getDimensionPixelSize(R.dimen.qqs_top_brightness_margin_top);
+                lp.bottomMargin = mContext.getResources()
+                        .getDimensionPixelSize(R.dimen.qqs_top_brightness_margin_bottom);
+            } else {
+                lp.topMargin = mContext.getResources()
+                        .getDimensionPixelSize(R.dimen.qqs_bottom_brightness_margin_top);
+                lp.bottomMargin = mContext.getResources()
+                        .getDimensionPixelSize(R.dimen.qqs_bottom_brightness_margin_bottom);
+            }
+            mBrightnessView.setLayoutParams(lp);
+        }
+    }
+
+    @Override
+    void initialize(QSLogger qsLogger) {
+        super.initialize(qsLogger);
+        if (mHorizontalContentContainer != null) {
+            mHorizontalContentContainer.setClipChildren(false);
+        }
+    }
+
     @Override
     public TileLayout getOrCreateTileLayout() {
         QQSSideLabelTileLayout layout = new QQSSideLabelTileLayout(mContext);

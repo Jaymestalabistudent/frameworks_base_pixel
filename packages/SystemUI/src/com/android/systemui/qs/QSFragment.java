@@ -677,6 +677,8 @@ public class QSFragment extends LifecycleFragment implements QS, CommandQueue.Ca
         int heightDiff = getHeightDiff();
         float panelTranslationY = translationScaleY * heightDiff;
 
+        mHeader.setExpansion(onKeyguardAndExpanded, expansion, panelTranslationY);
+
         if (expansion < 1 && expansion > 0.99) {
             if (mQuickQSPanelController.switchTileLayout(false)) {
                 mHeader.updateResources();
