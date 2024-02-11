@@ -48,11 +48,16 @@ import com.android.systemui.qs.ChipVisibilityListener
 import com.android.systemui.qs.HeaderPrivacyIconsController
 import com.android.systemui.qs.carrier.QSCarrierGroup
 import com.android.systemui.qs.carrier.QSCarrierGroupController
+import com.android.systemui.qs.QsControlsView
 import com.android.systemui.shade.ShadeHeaderController.Companion.HEADER_TRANSITION_ID
 import com.android.systemui.shade.ShadeHeaderController.Companion.LARGE_SCREEN_HEADER_CONSTRAINT
 import com.android.systemui.shade.ShadeHeaderController.Companion.LARGE_SCREEN_HEADER_TRANSITION_ID
 import com.android.systemui.shade.ShadeHeaderController.Companion.QQS_HEADER_CONSTRAINT
 import com.android.systemui.shade.ShadeHeaderController.Companion.QS_HEADER_CONSTRAINT
+import com.android.systemui.shade.ShadeViewProviderModule.Companion.SHADE_HEADER
+import com.android.systemui.shade.carrier.ShadeCarrierGroup
+import com.android.systemui.shade.carrier.ShadeCarrierGroupController
+import com.android.systemui.statusbar.NotificationMediaManager
 import com.android.systemui.statusbar.phone.StatusBarContentInsetsProvider
 import com.android.systemui.statusbar.phone.StatusBarIconController
 import com.android.systemui.statusbar.phone.StatusBarLocation
@@ -95,6 +100,10 @@ constructor(
     private val demoModeController: DemoModeController,
     private val qsBatteryModeController: QsBatteryModeController,
     private val activityStarter: ActivityStarter
+    private val nextAlarmController: NextAlarmController,
+    private val activityStarter: ActivityStarter,
+    private val statusOverlayHoverListenerFactory: StatusOverlayHoverListenerFactory,
+    private val tunerService: TunerService,
 ) : ViewController<View>(header), Dumpable {
 
     companion object {
@@ -119,12 +128,14 @@ constructor(
     private lateinit var iconManager: StatusBarIconController.TintedIconManager
     private lateinit var carrierIconSlots: List<String>
     private lateinit var qsCarrierGroupController: QSCarrierGroupController
-
-    private val batteryIcon: BatteryMeterView = header.findViewById(R.id.batteryRemainingIcon)
-    private val clock: Clock = header.findViewById(R.id.clock)
-    private val date: TextView = header.findViewById(R.id.date)
-    private val iconContainer: StatusIconContainer = header.findViewById(R.id.statusIcons)
     private val qsCarrierGroup: QSCarrierGroup = header.findViewById(R.id.carrier_group)
+
+    private val batteryIcon: BatteryMeterView = header.requireViewById(R.id.batteryRemainingIcon)
+    private val clock: Clock = header.requireViewById(R.id.clock)
+    private val date: TextView = header.requireViewById(R.id.date)
+    private val iconContainer: StatusIconContainer = header.requireViewById(R.id.statusIcons)
+    private val mShadeCarrierGroup: ShadeCarrierGroup = header.requireViewById(R.id.carrier_group)
+    private val systemIcons: View = header.requireViewById(R.id.shade_header_system_icons)
 
     private var roundedCorners = 0
     private var cutout: DisplayCutout? = null
@@ -253,6 +264,12 @@ constructor(
                     resources.getDimensionPixelSize(R.dimen.large_screen_shade_header_min_height)
                 lastInsets?.let { updateConstraintsForInsets(header, it) }
                 updateResources()
+                updateCarrierGroupPadding()
+                clock.onDensityOrFontScaleChanged()
+            }
+
+            override fun onUiModeChanged() {
+                updateResources()
             }
         }
 
@@ -307,6 +324,11 @@ constructor(
         configurationController.addCallback(configurationControllerListener)
         demoModeController.addCallback(demoModeReceiver)
         statusBarIconController.addIconGroup(iconManager)
+        nextAlarmController.addCallback(nextAlarmCallback)
+        updateResources()
+        systemIcons.setOnHoverListener(
+            statusOverlayHoverListenerFactory.createListener(systemIcons)
+        )
     }
 
     override fun onViewDetached() {
