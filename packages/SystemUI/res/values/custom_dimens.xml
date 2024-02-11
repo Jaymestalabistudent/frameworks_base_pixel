@@ -5,4 +5,6 @@
 
     <!-- Width of the battery icon in the status bar when set to circle style. -->
     <dimen name="status_bar_battery_icon_circle_width">14.5dp</dimen>
+    <!-- QS ui change expanding clock -->
+      <item name="qqs_expand_clock_scale" format="float" type="dimen">2.57</item>
 </resources>
