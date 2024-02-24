@@ -144,10 +144,6 @@ public class NotificationMediaManager implements Dumpable, TunerService.Tunable 
     private String mMediaNotificationKey;
     private MediaMetadata mMediaMetadata;
 
-    private String mNowPlayingNotificationKey;
-    private String mNowPlayingTrack;
-    private MediaSession.Token mNowPlayingToken;
-
     private BackDropView mBackdrop;
     private ImageView mBackdropFront;
     private ImageView mBackdropBack;
@@ -351,10 +347,6 @@ public class NotificationMediaManager implements Dumpable, TunerService.Tunable 
     public MediaMetadata getMediaMetadata() {
         return mMediaMetadata;
     }
-    
-    public MediaController getMediaController() {
-        return mMediaController;
-    }
 
     public Icon getMediaIcon() {
         if (mMediaNotificationKey == null) {
@@ -364,14 +356,6 @@ public class NotificationMediaManager implements Dumpable, TunerService.Tunable 
             .map(entry -> entry.getIcons().getShelfIcon())
             .map(StatusBarIconView::getSourceIcon)
             .orElse(null);
-    }
-    
-    public int getMediaBgColor() {
-        return mColorExtractor.getMediaBackgroundColor();
-    }
-    
-    public MediaSession.Token getMediaToken() {
-        return mNowPlayingToken;
     }
 
     public void addCallback(MediaListener callback) {
@@ -409,7 +393,6 @@ public class NotificationMediaManager implements Dumpable, TunerService.Tunable 
                 final MediaSession.Token token =
                         entry.getSbn().getNotification().extras.getParcelable(
                                 Notification.EXTRA_MEDIA_SESSION, MediaSession.Token.class);
-                mNowPlayingToken = token;
                 if (token != null) {
                     MediaController aController = new MediaController(mContext, token);
                     if (PlaybackState.STATE_PLAYING
@@ -491,7 +474,7 @@ public class NotificationMediaManager implements Dumpable, TunerService.Tunable 
                 && state != PlaybackState.STATE_NONE;
     }
 
-    public boolean sameSessions(MediaController a, MediaController b) {
+    private boolean sameSessions(MediaController a, MediaController b) {
         if (a == b) {
             return true;
         }
@@ -501,7 +484,7 @@ public class NotificationMediaManager implements Dumpable, TunerService.Tunable 
         return a.controlsSameSession(b);
     }
 
-    public int getMediaControllerPlaybackState(MediaController controller) {
+    private int getMediaControllerPlaybackState(MediaController controller) {
         if (controller != null) {
             final PlaybackState playbackState = controller.getPlaybackState();
             if (playbackState != null) {

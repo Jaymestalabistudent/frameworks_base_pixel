@@ -109,9 +109,6 @@ public class QSPanel extends LinearLayout implements Tunable {
     protected View mFooter;
 
     @Nullable
-    protected View mQsControlView;
-
-    @Nullable
     private PageIndicator mFooterPageIndicator;
     private int mContentMarginStart;
     private int mContentMarginEnd;
@@ -348,8 +345,23 @@ public class QSPanel extends LinearLayout implements Tunable {
         return TAG;
     }
 
-    QsControlsView getQsControlView() {
-        return (QsControlsView) mQsControlView;
+    @Override
+    public void onTuningChanged(String key, String newValue) {
+        if (QS_SHOW_AUTO_BRIGHTNESS.equals(key) && mIsAutomaticBrightnessAvailable) {
+            updateViewVisibilityForTuningValue(mAutoBrightnessView, newValue);
+        } else if (QS_SHOW_BRIGHTNESS_SLIDER.equals(key) && mBrightnessView != null) {
+            updateViewVisibilityForTuningValue(mBrightnessView, newValue);
+        }
+    }
+
+    private void updateViewVisibilityForTuningValue(View view, @Nullable String newValue) {
+        view.setVisibility(TunerService.parseIntegerSwitch(newValue, true) ? VISIBLE : GONE);
+    }
+
+
+    @Nullable
+    View getBrightnessView() {
+        return mBrightnessView;
     }
 
     /**
@@ -415,10 +427,6 @@ public class QSPanel extends LinearLayout implements Tunable {
     protected void onFinishInflate() {
         super.onFinishInflate();
         mFooter = findViewById(R.id.qs_footer);
-        mQsControlView = findViewById(R.id.qs_controls);
-        if(mQsControlView != null) {
-            mMovableContentStartIndex++;
-        }
     }
 
     private void updateHorizontalLinearLayoutMargins() {
@@ -453,11 +461,6 @@ public class QSPanel extends LinearLayout implements Tunable {
     private void switchAllContentToParent(ViewGroup parent, QSTileLayout newLayout) {
         int index = parent == this ? mMovableContentStartIndex : 0;
 
-        if (mQsControlView != null) {
-            switchToParent(mQsControlView, parent, index);
-            index++;
-        }
-
         // Let's first move the tileLayout to the new parent, since that should come first.
         switchToParent((View) newLayout, parent, index);
         index++;
@@ -471,6 +474,37 @@ public class QSPanel extends LinearLayout implements Tunable {
 
     private void switchToParent(View child, ViewGroup parent, int index) {
         switchToParent(child, parent, index, getDumpableTag());
+    }
+
+    /** Call when orientation has changed and MediaHost needs to be adjusted. */
+    private void reAttachMediaHost(ViewGroup hostView, boolean horizontal) {
+        if (!mUsingMediaPlayer) {
+            return;
+        }
+        mMediaHostView = hostView;
+        ViewGroup newParent = horizontal ? mHorizontalLinearLayout : this;
+        ViewGroup currentParent = (ViewGroup) hostView.getParent();
+        Log.d(getDumpableTag(), "Reattaching media host: " + horizontal
+                + ", current " + currentParent + ", new " + newParent);
+        if (currentParent != newParent) {
+            if (currentParent != null) {
+                currentParent.removeView(hostView);
+            }
+            newParent.addView(hostView);
+            LinearLayout.LayoutParams layoutParams = (LayoutParams) hostView.getLayoutParams();
+            layoutParams.height = ViewGroup.LayoutParams.WRAP_CONTENT;
+            layoutParams.width = horizontal ? 0 : ViewGroup.LayoutParams.MATCH_PARENT;
+            layoutParams.weight = horizontal ? 1f : 0;
+            // Add any bottom margin, such that the total spacing is correct. This is only
+            // necessary if the view isn't horizontal, since otherwise the padding is
+            // carried in the parent of this view (to ensure correct vertical alignment)
+            layoutParams.bottomMargin = !horizontal || displayMediaMarginsOnMedia()
+                    ? Math.max(mMediaTotalBottomMargin - getPaddingBottom(), 0) : 0;
+            layoutParams.topMargin = mediaNeedsTopMargin() && !horizontal
+                    ? mMediaTopMargin : 0;
+            // Call setLayoutParams explicitly to ensure that requestLayout happens
+            hostView.setLayoutParams(layoutParams);
+        }
     }
 
     public void setExpanded(boolean expanded) {
@@ -604,10 +638,6 @@ public class QSPanel extends LinearLayout implements Tunable {
             ViewGroup newParent = horizontal ? mHorizontalContentContainer : this;
             switchAllContentToParent(newParent, mTileLayout);
             reAttachMediaHost(mediaHostView, horizontal);
-            updateResources();
-            if (mBrightnessRunnable != null) {
-                mBrightnessRunnable.run();
-            }
             if (needsDynamicRowsAndColumns()) {
                 mTileLayout.setMinRows(horizontal ? 2 : 1);
                 mTileLayout.setMaxColumns(horizontal ? 2 : 6);
