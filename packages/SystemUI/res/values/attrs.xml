@@ -120,7 +120,8 @@
     <attr name="backgroundProtectedStyle" format="reference" />
     <attr name="offStateColor" format="reference|color" />
     <attr name="underSurfaceColor" format="reference|color" />
-
+    <attr name="shadeInactive" format="reference|color" />
+    
     <declare-styleable name="SmartReplyView">
         <attr name="spacing" format="dimension" />
         <attr name="buttonStrokeWidth" format="dimension" />
