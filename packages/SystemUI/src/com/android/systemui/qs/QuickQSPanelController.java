@@ -42,11 +42,6 @@ import com.android.systemui.util.leak.RotationUtils;
 import com.android.systemui.tuner.TunerService;
 import com.android.systemui.util.settings.SystemSettings;
 
-import com.android.systemui.media.dialog.MediaOutputDialogFactory;
-import com.android.systemui.plugins.ActivityStarter;
-import com.android.systemui.plugins.FalsingManager;
-import com.android.systemui.statusbar.NotificationMediaManager;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -70,19 +65,11 @@ public class QuickQSPanelController extends QSPanelControllerBase<QuickQSPanel> 
             MetricsLogger metricsLogger, UiEventLogger uiEventLogger, QSLogger qsLogger,
             DumpManager dumpManager,
             @Main Handler mainHandler,
-            SystemSettings systemSettings,
-            ActivityStarter activityStarter, 
-            FalsingManager falsingManager, 
-            NotificationMediaManager notificationMediaManager,
-            MediaOutputDialogFactory mediaOutputDialogFactory
+            SystemSettings systemSettings
     ) {
         super(view, qsHost, qsCustomizerController, usingMediaPlayer, mediaHost, metricsLogger,
                 uiEventLogger, qsLogger, dumpManager, mainHandler, systemSettings);
         mUsingCollapsedLandscapeMediaProvider = usingCollapsedLandscapeMediaProvider;
-        mView.getQsControlView()
-            .injectDependencies(
-                activityStarter, falsingManager,
-                notificationMediaManager, mediaOutputDialogFactory);
     }
 
     @Override
@@ -152,9 +139,5 @@ public class QuickQSPanelController extends QSPanelControllerBase<QuickQSPanel> 
 
     public int getNumQuickTiles() {
         return mView.getNumQuickTiles();
-    }
-    
-    QsControlsView getQsControlView() {
-        return mView.getQsControlView();
     }
 }

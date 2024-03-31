@@ -31,7 +31,6 @@
         android:clipChildren="false"
         android:clipToPadding="false"
         android:layout_weight="1">
-
         <com.android.systemui.qs.QSPanel
             android:id="@+id/quick_settings_panel"
             android:layout_width="match_parent"
@@ -41,11 +40,8 @@
             android:accessibilityTraversalBefore="@android:id/edit"
             android:clipToPadding="false"
             android:clipChildren="false">
-            
-             <include layout="@layout/qs_controls_layout" />
 
             <include layout="@layout/qs_footer_impl" />
-
         </com.android.systemui.qs.QSPanel>
     </com.android.systemui.qs.NonInterceptingScrollView>
 

@@ -25,7 +25,6 @@ import android.view.View.OnAttachStateChangeListener;
 import android.view.View.OnLayoutChangeListener;
 
 import androidx.annotation.Nullable;
-import androidx.viewpager.widget.ViewPager;
 
 import com.android.systemui.animation.Interpolators;
 import com.android.systemui.dagger.qualifiers.Main;
@@ -113,10 +112,6 @@ public class QSAnimator implements QSHost.Callback, PagedTileLayout.PageListener
     // Brightness slider translation driver, uses mQSExpansionPathInterpolator.yInterpolator
     @Nullable
     private TouchAnimator mBrightnessTranslationAnimator;
-    @Nullable
-    private TouchAnimator mQsControlsTranslationAnimator;
-    @Nullable
-    private TouchAnimator mQsControlsOpacityAnimator;
     // Brightness slider opacity driver. Uses linear interpolator.
     @Nullable
     private TouchAnimator mBrightnessOpacityAnimator;
@@ -431,7 +426,7 @@ public class QSAnimator implements QSHost.Callback, PagedTileLayout.PageListener
             }
         }
 
-        animateQsControlsSlider();
+        animateBrightnessSlider();
 
         mFirstPageAnimator = firstPageBuilder
                 // Fade in the tiles/labels as we reach the final position.
@@ -557,71 +552,55 @@ public class QSAnimator implements QSHost.Callback, PagedTileLayout.PageListener
         return new Pair<>(animator, builder.build());
     }
 
-    private void animateQsControlsSlider() {
-        mQsControlsTranslationAnimator = null;
-        mQsControlsOpacityAnimator = null;
-        QsControlsView qsQsControlsView = mQsPanelController.getQsControlView();
-        QsControlsView qqsQsControlsView = mQuickQSPanelController.getQsControlView();
-        final View qsQsControls = (View) qsQsControlsView;
-        final View qqsQsControls = (View) qqsQsControlsView;
-
-        if (qqsQsControls != null && qqsQsControls.getVisibility() == View.VISIBLE) {
-            mAnimatedQsViews.add(qsQsControls);
-            mAllViews.add(qqsQsControls);
-            int translationY = getRelativeTranslationY(qsQsControls, qqsQsControls);
-            mQsControlsTranslationAnimator = new Builder()
-                    .addFloat(qqsQsControls, "translationY", 0, translationY)
+    private void animateBrightnessSlider() {
+        mBrightnessTranslationAnimator = null;
+        mBrightnessOpacityAnimator = null;
+        View qsBrightness = mQsPanelController.getBrightnessView();
+        View qqsBrightness = mQuickQSPanelController.getBrightnessView();
+        if (qqsBrightness != null && qqsBrightness.getVisibility() == View.VISIBLE) {
+            // animating in split shade mode
+            mAnimatedQsViews.add(qsBrightness);
+            mAllViews.add(qqsBrightness);
+            int translationY = getRelativeTranslationY(qsBrightness, qqsBrightness);
+            mBrightnessTranslationAnimator = new Builder()
+                    // we need to animate qs brightness even if animation will not be visible,
+                    // as we might start from sliderScaleY set to 0.3 if device was in collapsed QS
+                    // portrait orientation before
+                    .addFloat(qsBrightness, "sliderScaleY", 0.3f, 1)
+                    .addFloat(qqsBrightness, "translationY", 0, translationY)
                     .setInterpolator(mQSExpansionPathInterpolator.getYInterpolator())
-                    .setInterpolator(mQuickQSPanelController.mMediaHost.getVisible() ?
-                            Interpolators.ALPHA_OUT : com.android.wm.shell.animation.Interpolators.SLOWDOWN_INTERPOLATOR)
                     .build();
-            ViewPager qsPager = qsQsControlsView.getViewPager();
-            int qqsPosition = qqsQsControlsView.getViewPager().getCurrentItem();
-            qsPager.setCurrentItem(qqsPosition, true);
-            qsQsControlsView.updateSliderProgress();
-            qsQsControlsView.updateMediaPlaybackState();
-        } else if (qsQsControls != null) {
+        } else if (qsBrightness != null) {
+            // The brightness slider's visible bottom edge must maintain a constant margin from the
+            // QS tiles during transition. Thus the slider must (1) perform the same vertical
+            // translation as the tiles, and (2) compensate for the slider scaling.
+
+            // For (1), compute the distance via the vertical distance between QQS and QS tile
+            // layout top.
             View quickSettingsRootView = mQs.getView();
             View qsTileLayout = (View) mQsPanelController.getTileLayout();
             View qqsTileLayout = (View) mQuickQSPanelController.getTileLayout();
-            ViewPager qqsPager = qqsQsControlsView.getViewPager();
-            int qsPosition = qsQsControlsView.getViewPager().getCurrentItem();
-            qqsPager.setCurrentItem(qsPosition, true);
-            qqsQsControlsView.updateSliderProgress();
-            qqsQsControlsView.updateMediaPlaybackState();
             getRelativePosition(mTmpLoc1, qsTileLayout, quickSettingsRootView);
             getRelativePosition(mTmpLoc2, qqsTileLayout, quickSettingsRootView);
             int tileMovement = mTmpLoc2[1] - mTmpLoc1[1];
-            float scaleCompensation = qsQsControls.getMeasuredHeight() * 0.5f;
-            mQsControlsTranslationAnimator = new Builder()
-                    .addFloat(qsQsControls, "translationY", scaleCompensation + tileMovement, 0)
+
+            // For (2), the slider scales to the vertical center, so compensate with half the
+            // height at full collapse.
+            float scaleCompensation = qsBrightness.getMeasuredHeight() * 0.5f;
+            mBrightnessTranslationAnimator = new Builder()
+                    .addFloat(qsBrightness, "translationY", scaleCompensation + tileMovement, 0)
+                    .addFloat(qsBrightness, "sliderScaleY", 0, 1)
                     .setInterpolator(mQSExpansionPathInterpolator.getYInterpolator())
                     .build();
-            mQsControlsOpacityAnimator = new Builder()
-                    .addFloat(qsQsControls, "alpha", 0, 1)
+
+            // While the slider's position and unfurl is animated throughouth the motion, the
+            // fade in happens independently.
+            mBrightnessOpacityAnimator = new Builder()
+                    .addFloat(qsBrightness, "alpha", 0, 1)
                     .setStartDelay(0.2f)
                     .setEndDelay(1 - 0.5f)
                     .build();
-            mAllViews.add(qsQsControls);
-        }
-    }
-
-    private void updateQsControls(float position) {
-        QsControlsView qsQsControlsView = mQsPanelController.getQsControlView();
-        QsControlsView qqsQsControlsView = mQuickQSPanelController.getQsControlView();
-        if (qsQsControlsView == null || qqsQsControlsView == null) return;
-        if (position == 1.0f) {
-            int qqsPosition = qqsQsControlsView.getViewPager().getCurrentItem();
-            qsQsControlsView.getViewPager().setCurrentItem(qqsPosition, true);
-            qsQsControlsView.updatePages(qqsPosition);
-            qsQsControlsView.updateSliderProgress();
-            qsQsControlsView.updateMediaPlaybackState();
-        } else if (position == 0.0f) {
-            int qsPosition = qsQsControlsView.getViewPager().getCurrentItem();
-            qqsQsControlsView.getViewPager().setCurrentItem(qsPosition, true);
-            qqsQsControlsView.updatePages(qsPosition);
-            qqsQsControlsView.updateSliderProgress();
-            qqsQsControlsView.updateMediaPlaybackState();
+            mAllViews.add(qsBrightness);
         }
     }
 
@@ -714,7 +693,6 @@ public class QSAnimator implements QSHost.Callback, PagedTileLayout.PageListener
         if (mQQSFooterActionsAnimator != null) {
             mQQSFooterActionsAnimator.setPosition(position);
         }
-        updateQsControls(position);
     }
 
     @Override

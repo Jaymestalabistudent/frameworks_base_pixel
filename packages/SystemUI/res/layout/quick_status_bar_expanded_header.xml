@@ -89,7 +89,6 @@
         android:focusable="true"
         android:paddingBottom="@dimen/qqs_layout_padding_bottom"
         android:importantForAccessibility="no">
-        <include layout="@layout/qs_controls_layout" />
     </com.android.systemui.qs.QuickQSPanel>
 
 </com.android.systemui.qs.QuickStatusBarHeader>

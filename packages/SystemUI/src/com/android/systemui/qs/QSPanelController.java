@@ -47,10 +47,6 @@ import com.android.systemui.statusbar.policy.BrightnessMirrorController;
 import com.android.systemui.tuner.TunerService;
 import com.android.systemui.util.settings.SystemSettings;
 
-import com.android.systemui.media.dialog.MediaOutputDialogFactory;
-import com.android.systemui.plugins.ActivityStarter;
-import com.android.systemui.statusbar.NotificationMediaManager;
-
 import javax.inject.Inject;
 import javax.inject.Named;
 
@@ -90,10 +86,7 @@ public class QSPanelController extends QSPanelControllerBase<QSPanel> {
             BrightnessSliderController.Factory brightnessSliderFactory,
             FalsingManager falsingManager,
             StatusBarKeyguardViewManager statusBarKeyguardViewManager,
-            @Main Handler mainHandler, SystemSettings systemSettings,
-            ActivityStarter activityStarter, 
-            NotificationMediaManager notificationMediaManager,
-            MediaOutputDialogFactory mediaOutputDialogFactory) {
+            @Main Handler mainHandler, SystemSettings systemSettings) {
         super(view, qsHost, qsCustomizerController, usingMediaPlayer, mediaHost,
                 metricsLogger, uiEventLogger, qsLogger, dumpManager,
                 mainHandler, systemSettings);
@@ -109,10 +102,6 @@ public class QSPanelController extends QSPanelControllerBase<QSPanel> {
                 mBrightnessSliderController.getIconView(), mBrightnessSliderController);
         mBrightnessMirrorHandler = new BrightnessMirrorHandler(mBrightnessController);
         mStatusBarKeyguardViewManager = statusBarKeyguardViewManager;
-        mView.getQsControlView()
-            .injectDependencies(
-                activityStarter, falsingManager,
-                notificationMediaManager, mediaOutputDialogFactory);
     }
 
     @Override
@@ -260,10 +249,6 @@ public class QSPanelController extends QSPanelControllerBase<QSPanel> {
 
     public int getPaddingBottom() {
         return mView.getPaddingBottom();
-    }
-    
-    QsControlsView getQsControlView() {
-        return mView.getQsControlView();
     }
 }
 
