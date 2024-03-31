@@ -19,4 +19,5 @@
     <!-- Settings Restart -->
     <string name="settings_restart_title">Settings restart required</string>
     <string name="settings_restart_message">For all changes to take effect, a Settings restart is required. Restart Settings now?</string>
+ 
 </resources>
