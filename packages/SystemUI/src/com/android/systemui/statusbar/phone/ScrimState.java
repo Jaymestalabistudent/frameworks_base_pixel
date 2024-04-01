@@ -150,7 +150,7 @@ public enum ScrimState {
             mBehindAlpha = mClipQsScrim ? mCustomScrimAlpha : mDefaultScrimAlpha;
             mNotifAlpha = mCustomScrimAlpha;
             mFrontAlpha = 0f;
-            mBehindTint = Color.TRANSPARENT;
+            mBehindTint = mClipQsScrim ? Color.TRANSPARENT : Color.BLACK;
 
             if (mClipQsScrim) {
                 updateScrimColor(mScrimBehind, mCustomScrimAlpha, Color.TRANSPARENT);
@@ -255,17 +255,17 @@ public enum ScrimState {
                     && !fromAod;
 
             mFrontTint = Color.TRANSPARENT;
-            mBehindTint = Color.TRANSPARENT;
+            mBehindTint = Color.BLACK;
             mBlankScreen = false;
 
             if (mDisplayRequiresBlanking && previousState == ScrimState.AOD) {
                 // Set all scrims black, before they fade transparent.
                 updateScrimColor(mScrimInFront, 1f /* alpha */, Color.BLACK /* tint */);
-                updateScrimColor(mScrimBehind, 1f /* alpha */, Color.TRANSPARENT /* tint */);
+                updateScrimColor(mScrimBehind, 1f /* alpha */, Color.BLACK /* tint */);
 
                 // Scrims should still be black at the end of the transition.
                 mFrontTint = Color.BLACK;
-                mBehindTint = Color.TRANSPARENT;
+                mBehindTint = Color.BLACK;
                 mBlankScreen = true;
             }
 
