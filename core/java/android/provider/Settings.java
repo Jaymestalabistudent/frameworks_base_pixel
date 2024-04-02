@@ -6333,11 +6333,6 @@ public final class Settings {
          **/
          public static final String QS_HEADER_IMAGE_PADDING_SIDE = "qs_header_image_padding_side";
 
-        /**
-         * Whether to disable qs on secure lockscreen.
-         * @hide
-         */
-        public static final String SECURE_LOCKSCREEN_QS_DISABLED = "secure_lockscreen_qs_disabled";
          /**
           * QS header image top padding
           * @hide
