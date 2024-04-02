@@ -15,8 +15,15 @@
   limitations under the License.
   -->
 
-<selector xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:drawable="@drawable/settingslib_track_on_background" android:state_checked="true"/>
-    <item android:drawable="@drawable/settingslib_track_off_background" android:state_checked="false"/>
-    <item android:drawable="@drawable/settingslib_track_disabled_background" android:state_enabled="false"/>
-</selector>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/two_target_divider"
+    android:layout_height="wrap_content"
+    android:layout_width="match_parent"
+    android:gravity="start|center_vertical"
+    android:orientation="horizontal">
+    <View
+        android:layout_height="1dp"
+        android:layout_width="match_parent"
+        android:background="?android:attr/dividerHorizontal" />
+</LinearLayout>
