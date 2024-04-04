@@ -1,6 +1,5 @@
 /*
  * Copyright (C) 2017 The Android Open Source Project
- *               2022 Project Kaleidoscope
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
  * except in compliance with the License. You may obtain a copy of the License at
@@ -92,10 +91,9 @@ public class QSIconViewImpl extends QSIconView {
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         final int w = MeasureSpec.getSize(widthMeasureSpec);
-        final int h = MeasureSpec.getSize(heightMeasureSpec);
         final int iconSpec = exactly(mIconSizePx);
         mIcon.measure(MeasureSpec.makeMeasureSpec(w, getIconMeasureMode()), iconSpec);
-        setMeasuredDimension(w, h);
+        setMeasuredDimension(w, mIcon.getMeasuredHeight());
     }
 
     @Override
@@ -111,10 +109,9 @@ public class QSIconViewImpl extends QSIconView {
     @Override
     protected void onLayout(boolean changed, int l, int t, int r, int b) {
         final int w = getMeasuredWidth();
-        final int h = getMeasuredHeight();
+        int top = 0;
         final int iconLeft = (w - mIcon.getMeasuredWidth()) / 2;
-        final int iconTop = (h - mIcon.getMeasuredHeight()) / 2;
-        layout(mIcon, iconLeft, iconTop);
+        layout(mIcon, iconLeft, top);
     }
 
     public void setIcon(State state, boolean allowAnimations) {

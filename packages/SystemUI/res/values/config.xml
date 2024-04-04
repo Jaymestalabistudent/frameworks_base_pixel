@@ -62,10 +62,10 @@
     <integer name="quick_qs_panel_max_tiles">@integer/quick_qs_panel_max_tiles_custom</integer>
 
     <!-- The maximum number of rows in the QuickQSPanel -->
-    <integer name="quick_qs_panel_max_rows">1</integer>
+    <integer name="quick_qs_panel_max_rows">@integer/quick_qs_panel_max_rows_custom</integer>
 
     <!-- The number of columns in the QuickSettings -->
-    <integer name="quick_settings_num_columns">4</integer>
+    <integer name="quick_settings_num_columns">@integer/quick_settings_num_columns_custom</integer>
 
     <!-- The number of rows in the QuickSettings -->
     <integer name="quick_settings_max_rows">@integer/quick_settings_max_rows_custom</integer>
