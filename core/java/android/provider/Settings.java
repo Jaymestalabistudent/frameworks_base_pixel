@@ -11818,7 +11818,11 @@ public final class Settings {
          */
         @Readable
         public static final String GAME_DASHBOARD_ALWAYS_ON = "game_dashboard_always_on";
-
+        /**
+        * Control whether GMS is enabled for this user.
+        * @hide
+        */
+       public static final String GMS_ENABLED = "gms_enabled";
         /**
          * The time in ms to keep the button backlight on after pressing a button.
          * A value of 0 will keep the buttons on for as long as the screen is on.
