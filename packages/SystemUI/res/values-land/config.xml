@@ -47,6 +47,4 @@
     <!-- Whether we use large screen shade header which takes only one row compared to QS header -->
     <bool name="config_use_large_screen_shade_header">true</bool>
 
-    <!-- The maximum number of tiles in the QuickQSPanel -->
-    <integer name="quick_qs_panel_max_tiles">6</integer>
 </resources>
