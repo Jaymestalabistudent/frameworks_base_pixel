@@ -46,13 +46,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-import ink.kscope.packageinstaller.activity.BasePackageInstallerActivity;
-
 /**
  * If a package gets installed from an content URI this step loads the package and turns it into
  * and installation from a file. Then it re-starts the installation as usual.
  */
-public class InstallStaging extends BasePackageInstallerActivity {
+public class InstallStaging extends BottomAlertActivity {
     private static final String LOG_TAG = InstallStaging.class.getSimpleName();
 
     private static final String STAGED_FILE = "STAGED_FILE";
@@ -73,17 +71,21 @@ public class InstallStaging extends BasePackageInstallerActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        hideInstallBtn();
-        mAppIconView.setImageResource(R.drawable.ic_file_download);
-        mAppLabelView.setText(R.string.app_name_unknown);
-        mCancelBtn.setText(R.string.cancel);
-        mCancelBtn.setOnClickListener(view -> {
-            if (mStagingTask != null) {
-                mStagingTask.cancel(true);
-            }
-            setResult(RESULT_CANCELED);
-            finish();
-        });
+        View dialogView = View.inflate(this, R.layout.install_content_view, null);
+        ImageView appIcon = dialogView.requireViewById(R.id.app_icon2);
+        appIcon.setImageDrawable(getDrawable(R.drawable.ic_file_download));
+        TextView appName = dialogView.requireViewById(R.id.app_name2);
+        mAlert.setView(dialogView);
+        appName.setText(getString(R.string.app_name_unknown));
+        mAlert.setButton(DialogInterface.BUTTON_NEGATIVE, getString(R.string.cancel),
+                (ignored, ignored2) -> {
+                    if (mStagingTask != null) {
+                        mStagingTask.cancel(true);
+                    }
+                    setResult(RESULT_CANCELED);
+                    finish();
+                }, null);
+        setupAlert();
         requireViewById(R.id.staging).setVisibility(View.VISIBLE);
 
         if (savedInstanceState != null) {

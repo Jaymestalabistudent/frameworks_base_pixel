@@ -62,7 +62,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static android.view.WindowManager.LayoutParams.SYSTEM_FLAG_HIDE_NON_SYSTEM_OVERLAY_WINDOWS;
-import ink.kscope.packageinstaller.activity.BasePackageInstallerActivity;
 
 /**
  * This activity is launched when a new application is installed via side loading
@@ -74,11 +73,7 @@ import ink.kscope.packageinstaller.activity.BasePackageInstallerActivity;
  * Based on the user response the package is then installed by launching InstallAppConfirm
  * sub activity. All state transitions are handled in this activity
  */
-public class PackageInstallerActivity extends BasePackageInstallerActivity {
-    private static final String TAG = "PackageInstaller";
-
-    private static final int REQUEST_TRUST_EXTERNAL_SOURCE = 1;
-
+public class PackageInstallerActivity extends BottomAlertActivity {
     static final String SCHEME_PACKAGE = "package";
     static final String EXTRA_CALLING_PACKAGE = "EXTRA_CALLING_PACKAGE";
     static final String EXTRA_CALLING_ATTRIBUTION_TAG = "EXTRA_CALLING_ATTRIBUTION_TAG";
@@ -130,13 +125,21 @@ public class PackageInstallerActivity extends BasePackageInstallerActivity {
     // Would the mOk button be enabled if this activity would be resumed
     private boolean mEnableOk = false;
 
-    private void startInstallConfirm() {
+    private void startInstallConfirm(PackageInfo oldInfo) {
+        View viewToEnable; // which install_confirm view to show
+        TextView oldVersionView, newVersionView;
+
+        requireViewById(R.id.updating_app_view).setVisibility(View.VISIBLE); // the main layout
+
         if (mAppInfo != null) {
-            mInstallTipView.setText(R.string.install_confirm_question_update);
-            mInstallBtn.setText(R.string.update);
+            viewToEnable = requireViewById(R.id.install_confirm_question_update);
+            oldVersionView = requireViewById(R.id.installed_app_version);
+            oldVersionView.setText(getString(R.string.old_version_number, oldInfo.versionName));
+            oldVersionView.setVisibility(View.VISIBLE);
+            mOk.setText(R.string.update);
         } else {
             // This is a new application with no permissions.
-            mInstallTipView.setText(R.string.install_confirm_question);
+            viewToEnable = requireViewById(R.id.install_confirm_question);
         }
         newVersionView = requireViewById(R.id.updating_app_version);
         newVersionView.setText(getString(R.string.new_version_number, mPkgInfo.versionName));
@@ -144,8 +147,8 @@ public class PackageInstallerActivity extends BasePackageInstallerActivity {
         newVersionView.setVisibility(View.VISIBLE);
 
         mEnableOk = true;
-        mInstallBtn.setEnabled(true);
-        mInstallBtn.setFilterTouchesWhenObscured(true);
+        mOk.setEnabled(true);
+        mOk.setFilterTouchesWhenObscured(true);
     }
 
     /**
@@ -376,8 +379,8 @@ public class PackageInstallerActivity extends BasePackageInstallerActivity {
             checkIfAllowedAndInitiateInstall();
         }
 
-        if (mInstallBtn != null) {
-            mInstallBtn.setEnabled(mEnableOk);
+        if (mOk != null) {
+            mOk.setEnabled(mEnableOk);
         }
     }
 
@@ -385,9 +388,9 @@ public class PackageInstallerActivity extends BasePackageInstallerActivity {
     protected void onPause() {
         super.onPause();
 
-        if (mInstallBtn != null) {
+        if (mOk != null) {
             // Don't allow the install button to be clicked as there might be overlays
-            mInstallBtn.setEnabled(false);
+            mOk.setEnabled(false);
         }
     }
 
@@ -407,33 +410,39 @@ public class PackageInstallerActivity extends BasePackageInstallerActivity {
     }
 
     private void bindUi() {
-        mAppIconView.setImageDrawable(mAppSnippet.icon);
-        mAppLabelView.setText(mAppSnippet.label);
-        mCancelBtn.setText(R.string.cancel);
-        mInstallBtn.setText(R.string.install);
-        mInstallBtn.setOnClickListener(view -> {
-            if (mInstallBtn.isEnabled()) {
-                if (mSessionId != -1) {
-                    mInstaller.setPermissionsResult(mSessionId, true);
+        View dialogView = View.inflate(this, R.layout.install_content_view, null);
+        ImageView appIcon = dialogView.requireViewById(R.id.app_icon2);
+        appIcon.setImageDrawable(mAppSnippet.icon);
+        TextView appName = dialogView.requireViewById(R.id.app_name2);
+        mAlert.setView(dialogView);
+        appName.setText(mAppSnippet.label);
+        mAlert.setButton(DialogInterface.BUTTON_POSITIVE, getString(R.string.install),
+                (ignored, ignored2) -> {
+                    if (mOk.isEnabled()) {
+                        if (mSessionId != -1) {
+                            mInstaller.setPermissionsResult(mSessionId, true);
+                            finish();
+                        } else {
+                            startInstall();
+                        }
+                    }
+                }, null);
+        mAlert.setButton(DialogInterface.BUTTON_NEGATIVE, getString(R.string.cancel),
+                (ignored, ignored2) -> {
+                    // Cancel and finish
+                    setResult(RESULT_CANCELED);
+                    if (mSessionId != -1) {
+                        mInstaller.setPermissionsResult(mSessionId, false);
+                    }
                     finish();
-                } else {
-                    startInstall();
-                }
-            }
-        });
-        mCancelBtn.setOnClickListener(view -> {
-            // Cancel and finish
-            setResult(RESULT_CANCELED);
-            if (mSessionId != -1) {
-                mInstaller.setPermissionsResult(mSessionId, false);
-            }
-            finish();
-        });
+                }, null);
+        setupAlert();
 
-        mInstallBtn.setEnabled(false);
+        mOk = mAlert.getButton(DialogInterface.BUTTON_POSITIVE);
+        mOk.setEnabled(false);
 
-        if (!mInstallBtn.isInTouchMode()) {
-            mCancelBtn.requestFocus();
+        if (!mOk.isInTouchMode()) {
+            mAlert.getButton(DialogInterface.BUTTON_NEGATIVE).requestFocus();
         }
 
         Button mCancel = mAlert.getButton(DialogInterface.BUTTON_NEGATIVE);
